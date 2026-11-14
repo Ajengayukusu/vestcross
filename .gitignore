@@ -1,0 +1,20 @@
+node_modules/
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# secrets — NEVER commit keys, mnemonics or recovery codes
+.env
+.env.*
+!.env.example
+.secrets/
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+
+# misc
+*.log
+.DS_Store

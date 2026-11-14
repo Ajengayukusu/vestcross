@@ -1,0 +1,113 @@
+{
+  "address": null,
+  "chainId": 9800,
+  "contract": "VestCross",
+  "crossVmPrecompile": "0x0000000000000000000000000000000000000901",
+  "crossVmSelector": "0x3c11078c",
+  "deployTx": null,
+  "escrowNativeAddress": null,
+  "liveProofPreflight": {
+    "accountsChecked": {
+      "beneficiaryIdx1": {
+        "cosmos": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+        "evm": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+        "evmWindow": "live but only 1 of 3 txs remaining \u2014 a fresh window would be opened for the claim steps once funding is possible",
+        "pqc": "found:true, possession_proven:true",
+        "uqor": "744238",
+        "wdtBalance": "0"
+      },
+      "deployerIdx0": {
+        "cosmos": "qor1dcse33ce3n3mwxxleuupqvfqeq6xl552zm2ltk",
+        "evm": "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
+        "evmWindow": "live, opened 10087826, expiry 10105106, 11 of 20 txs remaining, 14276775 uqor of value budget remaining \u2014 sufficient for deploy + interactions, no new window needed",
+        "pqc": "found:true, possession_proven:true",
+        "uqor": "91462407",
+        "wdtBalance": "0"
+      }
+    },
+    "bridgeParams": {
+      "bridge_allowed_targets": [
+        "cosmwasm:qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt",
+        "cosmwasm:qor1ufs3tlq4umljk0qfe8k5ya0x6hpavn897u2cnf9k0en9jr7qarqqmjalsd",
+        "cosmwasm:qor1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqfye7zd"
+      ],
+      "enabled": true,
+      "endpoint": "GET /qorechain/crossvm/v1/params",
+      "verdict": "WDT still allowlisted, code id 1 \u2014 GO for the bridge design",
+      "wdtPin": {
+        "code_id": "1",
+        "target": "cosmwasm:qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt"
+      }
+    },
+    "chainHeightAtProbe": "10088037",
+    "ethCallProbes": [
+      {
+        "label": "non-allowlisted target, payload {}",
+        "result": "REVERT: cross-VM bridge call refused: target cosmwasm:qor1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqgcpqu6 is not allowlisted.",
+        "verdict": "allowlist refusal discriminated exactly as the plan predicted"
+      },
+      {
+        "label": "WDT target, payload {}",
+        "result": "REVERT: cross-VM call failed: Error parsing into type cw20::msg::Cw20ExecuteMsg: Invalid type: execute wasm contract failed: CosmWasm contract execution failed.",
+        "verdict": "the call REACHED the WDT contract \u2014 the allowlist route works end to end"
+      },
+      {
+        "label": "WDT transfer {recipient: idx1, amount: 1000}, from = predicted VestCross contract address 0xF5aea48e87bF4DDcbFD961BFE3332dFf0f20E4e2 (deployer nonce 33)",
+        "result": "REVERT: cross-VM call failed: Overflow: Cannot Sub with 0 and 1000: execute wasm contract failed: CosmWasm contract execution failed.",
+        "verdict": "CW20 insufficient-balance (sender holds 0 WDT), NOT a bridge refusal \u2014 bridge semantics and sender=caller identity confirmed empirically"
+      },
+      {
+        "label": "same WDT transfer, from = deployer EVM 0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
+        "result": "REVERT: identical CW20 insufficient-balance error",
+        "verdict": "consistent: the bridge spends from the calling account's Native form"
+      }
+    ],
+    "executedAt": "2026-11-15 (WIB) / 2026-11-14 ~18:20 UTC",
+    "planStep": "scripts/plan-live-proof.md step 0 (read-only) + step 3.1-3.2 (acquisition investigation)",
+    "wdtAcquisition": {
+      "probeScript": "foundation-spike/account-tools/vc-probe0.mjs (read-only eth_call probes; no secrets printed, no state changed)",
+      "routesInvestigated": [
+        {
+          "finding": "Dispenses 100 QOR + fUSD + fETH + fBTC (bank denoms) per claim \u2014 verified in the foundation spike phase. WDT is not among the dispensed assets.",
+          "route": "Fest faucet / dashboard (dashboard.qorechain.io/faucet)"
+        },
+        {
+          "finding": "Module is live (5 pools) but every pool pairs uqor with an erc20:* fest token (fETH/fUSD/fBTC). AMM assets are bank denoms; the CW20 WDT is not a bank denom, no WDT pool exists, and nobody except the minter holds WDT that could seed one.",
+          "route": "Native AMM swap (x/amm, GET /qorechain/amm/v1/pools)"
+        },
+        {
+          "finding": "Vanilla cw20-base (code id 1, WDT is its only instance). token_info + minter queries: minter = qor1sxsu7z3r8wgw3623nxpqwgq8q4hz5g92vnkk48 (the token creator's test account), cap = null. cw20-base exposes mint ONLY to the minter and has no deposit/wrap/faucet execute messages. We do not control the minter account.",
+          "route": "WDT contract itself (faucet / mint / deposit entry points)"
+        },
+        {
+          "finding": "Impossible: the bridge executes with the calling contract as Native sender (confirmed by probes 3-4), not as the minter; a mint call would be rejected as unauthorized by the CW20 contract.",
+          "route": "Bridge-invoked mint (call WDT mint via 0x0901)"
+        },
+        {
+          "finding": "Impossible and pointless: instantiate permission is 'Nobody' for every code on Diana (permissioned), and a self-deployed token would not be the allowlisted WDT anyway.",
+          "route": "Self-deploy a substitute CW20"
+        },
+        {
+          "finding": "There is exactly ONE holder: the all_accounts query on WDT returns only qor1sxsu7z3r8wgw3623nxpqwgq8q4hz5g92vnkk48, holding the full total_supply 1000000000 (1000 WDT) untouched since instantiation at height 65070. The supply never circulated.",
+          "route": "Buy/receive from an existing holder"
+        }
+      ],
+      "verdict": "NO WORKING ROUTE from any account we control \u2014 live phase stopped here per plan, before any deployment or funds moved",
+      "whatWouldUnblock": "Any ONE of: (a) the WDT minter/creator account transfers some WDT to the VestCross escrow Native address (or to any account we control), (b) the fest adds WDT to the faucet/dashboard dispenser, (c) governance or the token team seeds a WDT AMM pool or a public WDT faucet contract. With WDT in hand, plan steps 2-7 execute unchanged: the bridge, ABI, sender identity and account windows are all pre-verified above."
+    },
+    "wdtTokenInfo": {
+      "admin": "",
+      "creator": "qor1sxsu7z3r8wgw3623nxpqwgq8q4hz5g92vnkk48",
+      "decimals": 6,
+      "instantiatedAtHeight": "65070",
+      "label": "wdt-test",
+      "minter": "qor1sxsu7z3r8wgw3623nxpqwgq8q4hz5g92vnkk48",
+      "name": "Wasm Deploy Test",
+      "symbol": "WDT",
+      "total_supply": "1000000000"
+    }
+  },
+  "network": "qorechain-diana",
+  "status": "NOT_DEPLOYED \u2014 live phase PAUSED at plan-live-proof step 3 (escrow funding): no WDT acquisition route exists from our accounts (full investigation in liveProofPreflight.wdtAcquisition). Bridge pre-flight (plan step 0) PASSED on 2026-11-15. Nothing below is invented: no address or tx hash is recorded for steps that did not execute.",
+  "wdtCw20": "qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt"
+}
