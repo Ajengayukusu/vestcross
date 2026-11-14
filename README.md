@@ -1,5 +1,7 @@
 # VestCross — Cross-VM Token Vesting (EVM schedules → Native CW20 payouts)
 
+[![Built on QoreChain](https://build.qorechain.io/badge/vestcross.svg)](https://build.qorechain.io/p/vestcross)
+
 > **A vesting contract on the EVM lane that pays out a CosmWasm token on the
 > Native lane — atomically, in one transaction, through the CrossVM Bridge.**
 > Built for the **QoreChain Developer Fest "Build Before Q-Day"** — **Cross-VM** category.

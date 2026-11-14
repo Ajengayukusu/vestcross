@@ -84,8 +84,9 @@ what the human decided, and how every AI-generated artefact was verified.*
 - `cd frontend && npm run build` — clean (`tsc -b && vite build`).
 - Every chain fact in the README traces to a live chain read from the
   research phase or to the official documentation URLs cited in
-  `contracts/ICrossVm.sol`; deployment facts are marked *pending* rather
-  than invented.
+  `contracts/ICrossVm.sol`; the deployment status is recorded honestly as
+  **NOT_DEPLOYED** in `deployments.testnet.json` (live deployment is
+  blocked on ecosystem WDT availability) rather than invented.
 
 ## Division of labour, in one line
 
