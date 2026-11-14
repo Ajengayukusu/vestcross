@@ -2,6 +2,8 @@
 
 [![Built on QoreChain](https://build.qorechain.io/badge/vestcross.svg)](https://build.qorechain.io/p/vestcross)
 
+**Live demo:** https://ajengayukusu.github.io/vestcross/
+
 > **A vesting contract on the EVM lane that pays out a CosmWasm token on the
 > Native lane — atomically, in one transaction, through the CrossVM Bridge.**
 > Built for the **QoreChain Developer Fest "Build Before Q-Day"** — **Cross-VM** category.
@@ -30,9 +32,10 @@
    ```bash
    npm install && npx hardhat test
    ```
-4. **See it (60 s).** Run the demo frontend — schedules, vesting progress,
-   claim flow, a bridge-refusal toggle that demonstrates the atomic revert,
-   and a two-sided claim history:
+4. **See it (60 s).** Open the hosted demo at https://ajengayukusu.github.io/vestcross/
+   — schedules, vesting progress, claim flow, a bridge-refusal toggle that
+   demonstrates the atomic revert, and a two-sided claim history. Or run it
+   locally:
    ```bash
    cd frontend && npm install && npm run dev   # http://localhost:5173
    ```
