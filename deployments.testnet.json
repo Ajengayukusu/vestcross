@@ -11,7 +11,7 @@
       "beneficiaryIdx1": {
         "cosmos": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
         "evm": "0x8d0A347d472568DfB6189c84603302d044F0107b",
-        "evmWindow": "live but only 1 of 3 txs remaining \u2014 a fresh window would be opened for the claim steps once funding is possible",
+        "evmWindow": "live but only 1 of 3 txs remaining — a fresh window would be opened for the claim steps once funding is possible",
         "pqc": "found:true, possession_proven:true",
         "uqor": "744238",
         "wdtBalance": "0"
@@ -19,7 +19,7 @@
       "deployerIdx0": {
         "cosmos": "qor1dcse33ce3n3mwxxleuupqvfqeq6xl552zm2ltk",
         "evm": "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
-        "evmWindow": "live, opened 10087826, expiry 10105106, 11 of 20 txs remaining, 14276775 uqor of value budget remaining \u2014 sufficient for deploy + interactions, no new window needed",
+        "evmWindow": "live, opened 10087826, expiry 10105106, 11 of 20 txs remaining, 14276775 uqor of value budget remaining — sufficient for deploy + interactions, no new window needed",
         "pqc": "found:true, possession_proven:true",
         "uqor": "91462407",
         "wdtBalance": "0"
@@ -33,7 +33,7 @@
       ],
       "enabled": true,
       "endpoint": "GET /qorechain/crossvm/v1/params",
-      "verdict": "WDT still allowlisted, code id 1 \u2014 GO for the bridge design",
+      "verdict": "WDT still allowlisted, code id 1 — GO for the bridge design",
       "wdtPin": {
         "code_id": "1",
         "target": "cosmwasm:qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt"
@@ -49,12 +49,12 @@
       {
         "label": "WDT target, payload {}",
         "result": "REVERT: cross-VM call failed: Error parsing into type cw20::msg::Cw20ExecuteMsg: Invalid type: execute wasm contract failed: CosmWasm contract execution failed.",
-        "verdict": "the call REACHED the WDT contract \u2014 the allowlist route works end to end"
+        "verdict": "the call REACHED the WDT contract — the allowlist route works end to end"
       },
       {
         "label": "WDT transfer {recipient: idx1, amount: 1000}, from = predicted VestCross contract address 0xF5aea48e87bF4DDcbFD961BFE3332dFf0f20E4e2 (deployer nonce 33)",
         "result": "REVERT: cross-VM call failed: Overflow: Cannot Sub with 0 and 1000: execute wasm contract failed: CosmWasm contract execution failed.",
-        "verdict": "CW20 insufficient-balance (sender holds 0 WDT), NOT a bridge refusal \u2014 bridge semantics and sender=caller identity confirmed empirically"
+        "verdict": "CW20 insufficient-balance (sender holds 0 WDT), NOT a bridge refusal — bridge semantics and sender=caller identity confirmed empirically"
       },
       {
         "label": "same WDT transfer, from = deployer EVM 0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
@@ -68,7 +68,7 @@
       "probeScript": "foundation-spike/account-tools/vc-probe0.mjs (read-only eth_call probes; no secrets printed, no state changed)",
       "routesInvestigated": [
         {
-          "finding": "Dispenses 100 QOR + fUSD + fETH + fBTC (bank denoms) per claim \u2014 verified in the foundation spike phase. WDT is not among the dispensed assets.",
+          "finding": "Dispenses 100 QOR + fUSD + fETH + fBTC (bank denoms) per claim — verified in the foundation spike phase. WDT is not among the dispensed assets.",
           "route": "Fest faucet / dashboard (dashboard.qorechain.io/faucet)"
         },
         {
@@ -92,7 +92,7 @@
           "route": "Buy/receive from an existing holder"
         }
       ],
-      "verdict": "NO WORKING ROUTE from any account we control \u2014 live phase stopped here per plan, before any deployment or funds moved",
+      "verdict": "NO WORKING ROUTE from any account we control — live phase stopped here per plan, before any deployment or funds moved",
       "whatWouldUnblock": "Any ONE of: (a) the WDT minter/creator account transfers some WDT to the VestCross escrow Native address (or to any account we control), (b) the fest adds WDT to the faucet/dashboard dispenser, (c) governance or the token team seeds a WDT AMM pool or a public WDT faucet contract. With WDT in hand, plan steps 2-7 execute unchanged: the bridge, ABI, sender identity and account windows are all pre-verified above."
     },
     "wdtTokenInfo": {
@@ -108,6 +108,143 @@
     }
   },
   "network": "qorechain-diana",
-  "status": "NOT_DEPLOYED \u2014 live phase PAUSED at plan-live-proof step 3 (escrow funding): no WDT acquisition route exists from our accounts (full investigation in liveProofPreflight.wdtAcquisition). Bridge pre-flight (plan step 0) PASSED on 2026-11-15. Nothing below is invented: no address or tx hash is recorded for steps that did not execute.",
-  "wdtCw20": "qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt"
+  "status": "v1 NOT_DEPLOYED (unchanged: WDT escrow cannot be funded — see liveProofPreflight.wdtAcquisition). v2 LIVE on Diana since 2026-11-16 — see v2LiveDeployment.",
+  "wdtCw20": "qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt",
+  "v2LiveDeployment": {
+    "status": "LIVE",
+    "deployedAt": "2026-11-16 (WIB)",
+    "design": "QoreVest pattern: vested asset is the project ERC20 (vDEMO) escrowed and paid on the EVM lane; every claim atomically journals increase_allowance into the allowlisted WDT CW20 via bridge precompile 0x0901. Invariant: ERC20 paid == WDT allowance == claimedAmount.",
+    "rationale": "SELF_TOKEN_ROUTE.md (Phase 1): self-issued CW20 impossible (instantiate permission Nobody chain-wide; bridge allowlist = 3 pinned targets); fest Cross-VM text requires an EVM-to-Native call to an approved Native contract and lists \"EVM token with Native vesting\" as an example.",
+    "windows": {
+      "idx0OpenTx": "91FED33B64302E51B275BC29E0A2834129FCDF77E93132F26A53E4500ADCC986",
+      "idx1OpenTx": "B977238B5C34B99B81248DD991C9D1E7B9E8CE9C4CF55685947759BBC9AF0507"
+    },
+    "preflight": {
+      "gate1": "eth_call probe: increase_allowance on WDT via 0x0901 SUCCEEDS in simulation from idx0 and from the predicted contract address (64-byte reply); transfer control still reverts with CW20 insufficient balance.",
+      "gate2": "QoreVest invariant independently verified on chain: WDT allowance(owner=qor1vljgvtpc3f026en0ttp5pl577t7plrmgce7vdj) = 100000000000 and 50000000000 for its two beneficiaries, matching their EVM claimed totals.",
+      "script": "foundation-spike/account-tools/vc2-preflight.mjs"
+    },
+    "deployer": "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
+    "token": {
+      "address": "0x93B8F1162c7b153A7F5bd9d3341256188C93D796",
+      "name": "VestCross Demo Token",
+      "symbol": "vDEMO",
+      "decimals": 6,
+      "totalSupply": "1000000000000",
+      "deployTx": "0xd27170cd7d836e44aa9d95a7be78fe247201601d88d6496266486a8f32273c2d",
+      "deployTxCosmos": "0F64F649D255777F22461352A79462BCA3AC461A204D65AC6AA3F1B3C5FC8D05"
+    },
+    "contract": "0x64ab1fABEA011CA0395Ad835EC38B590CF76C295",
+    "deployTx": "0x259e8a9b0dae0be1adaf799d0fd90db7266ef4a523b1db5e7b8af16021fd8a70",
+    "escrowNativeAddress": "qor1vj43l2l2qyw2qw26mq67cw94jr8hds54tqr6k8",
+    "setEscrowNativeTx": "0x1298194c19ddb1eefe61d11376f34d904e250db7d1467161d3178651f3a82cef",
+    "wdtJournalContract": "qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt",
+    "crossVmPrecompile": "0x0000000000000000000000000000000000000901",
+    "funding": {
+      "amount": "200000000000",
+      "tx": "0x33f5f5ec1503e0ce8836e85e19956a27e47840d022ee9c33a02fbe9b4d3c0145"
+    },
+    "schedules": [
+      {
+        "id": 0,
+        "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+        "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+        "totalAmount": "100000000000",
+        "cliffSeconds": 120,
+        "durationSeconds": 1200,
+        "revocable": true,
+        "createTx": "0x20eb619449141b8a66c6181866cda52ec206059bc503ccba53f5d3cb0518d33a",
+        "blockNumber": 10160430
+      },
+      {
+        "id": 1,
+        "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+        "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+        "totalAmount": "10000000000",
+        "cliffSeconds": 86400,
+        "durationSeconds": 172800,
+        "revocable": true,
+        "createTx": "0x4ded139cc505f201ca47ccb30602f44bb46122bee98a846d53984cae27dde0cc",
+        "blockNumber": 10160431
+      }
+    ],
+    "claims": [
+      {
+        "scheduleId": 0,
+        "tx": "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
+        "status": 1,
+        "blockNumber": 10160531,
+        "amountFromEvent": "12000000000",
+        "claimedAmountAfter": "12000000000",
+        "beneficiaryTokenBalanceAfter": "12000000000"
+      },
+      {
+        "scheduleId": 0,
+        "tx": "0x6f6d84ef45d08c610b96c52d46eb7cf224b0fa39919acf9a5156eeae8fa755f1",
+        "status": 1,
+        "blockNumber": 10160574,
+        "amountFromEvent": "5250000000",
+        "claimedAmountAfter": "17250000000",
+        "beneficiaryTokenBalanceAfter": "17250000000"
+      }
+    ],
+    "refusalPreCliff": {
+      "scheduleId": 1,
+      "tx": "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
+      "status": 0,
+      "blockNumber": 10160533,
+      "claimedAmountAfter": "0",
+      "expectedError": "NothingToClaim (cliff of 86400 s not reached)"
+    },
+    "badTargetAtomicityDemo": {
+      "contract": "0x3adcFAe734C579FAa3c6fD9aE84101429b13f603",
+      "deployTx": "0x578704bb99135cabe9619751cdbf4d339b1c6fc871e74e2ab584519edabc313f",
+      "nativeTarget": "qor1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqgcpqu6",
+      "escrowNativeAddress": "qor18tw04ee5c4ul4g7xlkdwssgpg2d38asreyln04",
+      "fundTx": "0x376259239273b8d798890ed405b552ac8e1f4767bea2d783c6b66e241b2b7c1c",
+      "schedule": {
+        "id": 0,
+        "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+        "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+        "totalAmount": "10000000000",
+        "cliffSeconds": 0,
+        "durationSeconds": 600,
+        "revocable": true,
+        "createTx": "0xd711fcae7e47d4473cf60e816d6927f798a9f202485b15fd6cf1f0cf108b742f"
+      },
+      "claimAttempt": {
+        "contract": "0x3adcFAe734C579FAa3c6fD9aE84101429b13f603",
+        "scheduleId": 0,
+        "tx": "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
+        "status": 0,
+        "blockNumber": 10160553,
+        "claimableBefore": "2500000000",
+        "claimedAmountAfter": "0",
+        "beneficiaryTokenBalanceBefore": "12000000000",
+        "beneficiaryTokenBalanceAfter": "12000000000",
+        "expectedError": "CrossVmCallFailed: cross-VM bridge call refused: target ... is not allowlisted"
+      }
+    },
+    "verification": {
+      "erc20PaidToBeneficiary": "17250000000",
+      "contractClaimedAmount": "17250000000",
+      "wdtAllowanceJournal": "17250000000",
+      "invariantHolds": true,
+      "schedule1Claimed": "0",
+      "schedule1Untouched": true,
+      "badTargetClaimed": "0",
+      "badTargetAllowance": "0",
+      "badTargetUntouched": true,
+      "vestingContractTokenBalance": "182750000000",
+      "totalReserved": "92750000000",
+      "claimTx": "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
+      "refusalPreCliffTx": "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
+      "refusalPreCliffStatus": 0,
+      "refusalBadTargetTx": "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
+      "refusalBadTargetStatus": 0,
+      "script": "scripts/verify-v2.ts",
+      "result": "ALL V2 LIVE CHECKS PASS"
+    },
+    "recoveryNote": "Token deployment recovered after the original deploy run was interrupted by a service restart; verified on chain before resuming."
+  }
 }

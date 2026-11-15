@@ -1,0 +1,19 @@
+{
+  "token": "0x93B8F1162c7b153A7F5bd9d3341256188C93D796",
+  "badTargetContract": "0x3adcFAe734C579FAa3c6fD9aE84101429b13f603",
+  "badTargetDeployTx": "0x578704bb99135cabe9619751cdbf4d339b1c6fc871e74e2ab584519edabc313f",
+  "badTargetNativeTarget": "qor1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqgcpqu6",
+  "badTargetEscrowNativeAddress": "qor18tw04ee5c4ul4g7xlkdwssgpg2d38asreyln04",
+  "badTargetSetEscrowNativeTx": "0x5094720b98cbb27ca78dbf18a31a611a83a3bd505a94c8c6952fa3347615ed0a",
+  "badTargetFundTx": "0x376259239273b8d798890ed405b552ac8e1f4767bea2d783c6b66e241b2b7c1c",
+  "badTargetSchedule": {
+    "id": 0,
+    "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+    "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+    "totalAmount": "10000000000",
+    "cliffSeconds": 0,
+    "durationSeconds": 600,
+    "revocable": true,
+    "createTx": "0xd711fcae7e47d4473cf60e816d6927f798a9f202485b15fd6cf1f0cf108b742f"
+  }
+}

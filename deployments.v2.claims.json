@@ -1,0 +1,41 @@
+{
+  "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+  "claim": {
+    "scheduleId": 0,
+    "tx": "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
+    "status": 1,
+    "blockNumber": 10160531,
+    "amountFromEvent": "12000000000",
+    "claimedAmountAfter": "12000000000",
+    "beneficiaryTokenBalanceAfter": "12000000000"
+  },
+  "refusalPreCliff": {
+    "scheduleId": 1,
+    "tx": "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
+    "status": 0,
+    "blockNumber": 10160533,
+    "claimedAmountAfter": "0",
+    "expectedError": "NothingToClaim (cliff of 86400 s not reached)"
+  },
+  "refusalBadTarget": {
+    "contract": "0x3adcFAe734C579FAa3c6fD9aE84101429b13f603",
+    "scheduleId": 0,
+    "tx": "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
+    "status": 0,
+    "blockNumber": 10160553,
+    "claimableBefore": "2500000000",
+    "claimedAmountAfter": "0",
+    "beneficiaryTokenBalanceBefore": "12000000000",
+    "beneficiaryTokenBalanceAfter": "12000000000",
+    "expectedError": "CrossVmCallFailed: cross-VM bridge call refused: target ... is not allowlisted"
+  },
+  "claim2": {
+    "scheduleId": 0,
+    "tx": "0x6f6d84ef45d08c610b96c52d46eb7cf224b0fa39919acf9a5156eeae8fa755f1",
+    "status": 1,
+    "blockNumber": 10160574,
+    "amountFromEvent": "5250000000",
+    "claimedAmountAfter": "17250000000",
+    "beneficiaryTokenBalanceAfter": "17250000000"
+  }
+}

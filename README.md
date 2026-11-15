@@ -1,4 +1,4 @@
-# VestCross — Cross-VM Token Vesting (EVM schedules → Native CW20 payouts)
+# VestCross — Cross-VM Token Vesting (EVM schedules, Native cross-VM journal)
 
 [![Built on QoreChain](https://build.qorechain.io/badge/vestcross.svg)](https://build.qorechain.io/p/vestcross)
 
@@ -6,10 +6,16 @@
 
 **Demo video (≤ 3 min):** https://www.youtube.com/watch?v=59U5AUgLYoY
 
-> **A vesting contract on the EVM lane that pays out a CosmWasm token on the
-> Native lane — atomically, in one transaction, through the CrossVM Bridge.**
+> **A vesting contract on the EVM lane whose every claim atomically writes
+> a cross-VM journal entry into an approved Native contract through the
+> CrossVM Bridge — LIVE on testnet (v2), with the original CW20-payout
+> design (v1) preserved and proven locally.**
 > Built for the **QoreChain Developer Fest "Build Before Q-Day"** — **Cross-VM** category.
 > Testnet: **QoreChain Diana** (EVM chain ID 9800) · Contract: Solidity 0.8.24 · License: MIT
+>
+> **LIVE (v2):** VestCrossV2 `0x64ab1fABEA011CA0395Ad835EC38B590CF76C295` ·
+> VestCrossToken (vDEMO) `0x93B8F1162c7b153A7F5bd9d3341256188C93D796` ·
+> evidence in `deployments.testnet.json` (`v2LiveDeployment`).
 
 ---
 
@@ -21,19 +27,25 @@
    EVM lane. A vesting schedule for a Native token therefore has to *reach
    across VMs* — and a payout that is recorded on one lane but fails on the
    other is worse than no payout at all.
-2. **The fix (30 s).** `VestCross.sol` keeps the vesting schedule on EVM and
-   pays claims by calling the **CrossVM Bridge precompile (`0x0901`)**, which
-   executes a CW20 `transfer` on the allowlisted WDT contract from the
-   contract's own Native escrow account. The bridge **journals** the nested
-   Native execution against the EVM frame: if either side fails, **both
-   revert**. `claimedAmount` is written *only after* the bridge confirms the
-   Native transfer succeeded — the two lanes can never disagree.
-3. **Proof it works (60 s).** Run the test suite — **33 tests**, including a
-   dedicated atomicity block (bridge refusal, inactive-precompile empty
-   reply, underfunded escrow — each asserting *both* sides stay untouched):
+2. **The fix (30 s).** The vesting schedule lives on EVM. Every claim calls
+   the **CrossVM Bridge precompile (`0x0901`)** to write the claimed amount
+   into the allowlisted Native WDT contract as an `increase_allowance`
+   journal entry for the beneficiary — and pays out the vested ERC20 in
+   the *same transaction*. The bridge **journals** the nested Native
+   execution against the EVM frame: if either side fails, **both revert**.
+   `claimedAmount` is written *only after* both legs succeed, giving a
+   three-way invariant anyone can verify: **ERC20 paid == WDT allowance
+   == claimedAmount**. (v1, preserved in `contracts/VestCross.sol`, paid
+   the CW20 itself the same way — see "Why v2 exists".)
+3. **Proof it works (60 s).** Run the test suite — **70 tests** (33 v1 +
+   37 v2), including dedicated atomicity blocks asserting *all* sides
+   stay untouched on failure:
    ```bash
    npm install && npx hardhat test
    ```
+   Then verify the live deployment read-only (`npx ts-node
+   scripts/verify-v2.ts`): it re-reads the EVM books and the WDT
+   allowance by CosmWasm smart query and checks the invariant.
 4. **See it (60 s).** Open the hosted demo at https://ajengayukusu.github.io/vestcross/
    — schedules, vesting progress, claim flow, a bridge-refusal toggle that
    demonstrates the atomic revert, and a two-sided claim history. Or run it
@@ -41,72 +53,75 @@
    ```bash
    cd frontend && npm install && npm run dev   # http://localhost:5173
    ```
-5. **Deployment status.** **NOT DEPLOYED — the live phase ran on
-   2026-11-15 and is PAUSED at the escrow-funding step, for a documented
-   chain-side reason.** The read-only bridge pre-flight
-   (`scripts/plan-live-proof.md` step 0) **PASSED**: WDT is still
-   allowlisted (code id 1) and the `eth_call` probes discriminated all
-   three outcomes exactly as designed — bridge refusal
-   (`… is not allowlisted`) for a non-allowlisted target, a CW20 parse
-   error proving the call reaches WDT, and a CW20 insufficient-balance
-   error (`Cannot Sub with 0 and 1000`) proving the bridge spends from
-   the calling account. **But the escrow cannot be funded:** the entire
-   WDT supply (1,000,000,000 base units) sits untouched in the token
-   minter's account — a QoreChain team test account — and the token's
-   `all_accounts` query lists it as the *only holder in existence*. The
-   fest faucet dispenses only QOR/fUSD/fETH/fBTC, the Native AMM trades
-   only bank denoms (no WDT pool can exist), and vanilla cw20-base mint
-   is minter-only. Six acquisition routes were investigated and are
-   recorded with their evidence in `deployments.testnet.json`
-   (`liveProofPreflight.wdtAcquisition`). The moment any WDT reaches an
-   account we control, plan steps 2–7 execute unchanged — bridge, ABI,
-   sender identity and account windows are all pre-verified. This README
-   and `deployments.testnet.json` contain no invented address or hash.
+5. **Deployment status — LIVE (v2, deployed 2026-11-16).**
+   VestCrossV2 `0x64ab1fABEA011CA0395Ad835EC38B590CF76C295` escrows the
+   project ERC20 **vDEMO** (`0x93B8F1162c7b153A7F5bd9d3341256188C93D796`)
+   and journals every claim into WDT. Two real claims are on chain
+   (12,000 + 5,250 vDEMO); the three-way invariant was verified by an
+   independent smart query: paid **17,250,000,000** == allowance
+   **17,250,000,000** == claimedAmount **17,250,000,000** base units. A
+   pre-cliff claim and a claim on a throwaway deployment pointed at a
+   non-allowlisted target both landed on chain and reverted (status 0),
+   moving nothing — the atomicity proof. **Why not v1's design live?**
+   v1 pays WDT itself from a Native escrow, but the entire WDT supply
+   sits untouched in its minter's account (the token's only holder),
+   every acquisition route is closed, and new CW20 instantiation is
+   permissioned shut chain-wide — the full investigation is in
+   `deployments.testnet.json` and `SELF_TOKEN_ROUTE.md`. `increase_allowance`
+   needs no WDT balance, so v2 runs today; v1 executes unchanged the
+   moment any WDT becomes obtainable. No address or hash in this README
+   is invented.
 
 ---
 
-## How it works
+## How it works — v2 (live)
 
 ```
    EVM lane (Diana, chain 9800)                     Native lane (CosmWasm)
  ┌───────────────────────────────┐
- │ VestCross.sol                 │
- │  schedule: beneficiary,       │   claim()
- │  cliff, duration, claimed     │ ─────────────┐
- └───────────────────────────────┘              │
-                                                 ▼
-                              CrossVM Bridge precompile 0x0901
-                              executeCrossVMCall(1, WDT, payload)
-                              payload = {"transfer":{"recipient":"qor1…",
-                                                 "amount":"…"}}  (UTF-8 JSON)
-                                                 │
-                                                 ▼
-                              CW20 WDT contract (allowlisted, code id 1)
-                              transfer FROM VestCross's Native escrow account
-                              TO the beneficiary's Native address
-                                                 │
-              ┌──────────────────────────────────┘
-              ▼  success (reply ≥ 64 bytes, abi.encode(bytes))
-   claimedAmount += amount · VestingClaimed(amount, totalClaimed, nativeReply)
-              ✗ any failure → whole transaction reverts → NOTHING recorded,
-                Native transfer rolled back with it (bridge journaling)
+ │ VestCrossV2                   │   claim()
+ │  schedule: beneficiary,       │ ─────────────┐
+ │  cliff, duration, claimed     │              ▼
+ │  escrow: vDEMO (ERC20)        │   CrossVM Bridge precompile 0x0901
+ └───────────────────────────────┘   executeCrossVMCall(1, WDT, payload)
+              ▲                      payload = {"increase_allowance":
+              │                        {"spender":"qor1…","amount":"…"}}
+              │                                   │
+              │                                   ▼
+              │              CW20 WDT contract (allowlisted, code id 1)
+              │              allowance[owner = VestCrossV2's Native form]
+              │                        [spender = beneficiary] += amount
+              │                                   │
+              └───────────────────────────────────┘
+                 journal confirmed (reply ≥ 64 bytes)
+   → THEN the ERC20 payout runs, claimedAmount += amount,
+     VestingClaimed(amount, totalClaimed, nativeReply)
+              ✗ any failure → whole transaction reverts → NOTHING
+                recorded on either lane (bridge journaling)
 ```
 
 **Schedules.** `createSchedule(beneficiaryEvm, beneficiaryNative, total,
-cliff, duration, revocable)` — linear vesting from `start`, zero before the
-cliff, full at `start + duration`. Amounts are WDT base units.
+cliff, duration, revocable)` — linear vesting from `start`, zero before
+the cliff, full at `start + duration`. Amounts are vDEMO base units
+(6 decimals, mirroring WDT so the journal and the payout compare 1:1).
 
 **Revoke.** The funder may revoke a revocable schedule **only before the
 cliff**. Once vesting has begun, the beneficiary's claim is untouchable —
-there is no admin key, no pause, and no way to claw back vested WDT.
+there is no admin key, no pause, and no way to claw back vested tokens.
 
-**Funding.** The WDT lives in the contract's *Native* account (the qor1
-form of the contract address). Funding happens on the Native lane
-(a CW20 transfer to that address); `setEscrowNativeAddress` records it
-one-time, right after deployment, as the public funding target.
-`totalReserved` tracks the EVM-side commitments against that account, and
-the CW20 contract itself is the final guard: an underfunded escrow makes
-the bridge call fail and the claim revert — never overpay.
+**Funding.** Schedules are backed by vDEMO actually held by the contract:
+anyone funds it by transferring the token to the contract, and
+`createSchedule` reverts (`InsufficientEscrow`) if the unreserved pool
+cannot cover the new schedule. `totalReserved` tracks commitments;
+`setEscrowNativeAddress` records the contract's qor1 form one-time —
+the allowance *owner* identity verifiers query on the Native side.
+
+**v1 (original design, preserved).** `contracts/VestCross.sol` pays the
+CW20 WDT itself from the contract's Native escrow via a bridge
+`transfer` — identical schedule/revoke/atomicity semantics, proven by
+its 33 tests and by read-only bridge probes against the real chain. It
+is not deployed because its escrow cannot be funded (see Honest limits);
+the plan to run it unchanged is `scripts/plan-live-proof.md`.
 
 ### The bridge call, exactly as the node decodes it
 
@@ -139,13 +154,13 @@ function executeCrossVMCall(uint8 targetVM, string targetContract, bytes payload
 
 | Cross-VM requirement | Where VestCross satisfies it | Evidence |
 |---|---|---|
-| Real EVM → Native composition via the bridge precompile | `claim()` in `contracts/VestCross.sol` calls `0x0901` with `executeCrossVMCall(1, WDT, payload)`; the precompile address and WDT target are constructor-injected so the production wiring is explicit | Contract source + test asserting the mock bridge received targetVM = 1, the real WDT address, and the byte-exact payload |
-| The one legal target on Diana | WDT CW20 `qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt` — allowlist entry code 1 in `bridge_allowed_targets`. No self-deployed Native contract (uploads are permissioned shut network-wide) | Plan-live-proof step 0 re-reads `/qorechain/crossvm/v1/params` before anything is deployed |
-| Atomicity / two-sided rollback | State written only after bridge success; bridge journals the Native leg against the EVM frame; every failure mode reverts the whole claim | Hardhat "atomicity" block: bridge refusal, empty reply (inactive precompile) and underfunded escrow each assert claimed = 0 **and** Native balances unchanged; on-chain replays of both failure demos are steps 6.1/6.2 of the live-proof plan |
-| Correct payload encoding | CW20 execute message as UTF-8 JSON, `Uint128` as string, built by the public `transferPayload()` so frontend/tests/scripts reproduce it byte-for-byte | Test: payload equals `{"transfer":{"recipient":"qor1abc","amount":"100"}}` exactly |
-| Tests | Hardhat + TypeScript, positive + negative + atomicity coverage | `npx hardhat test` → **33 passing** |
+| Real EVM → Native composition via the bridge precompile | `claim()` in `contracts/v2/VestCrossV2.sol` calls `0x0901` with `executeCrossVMCall(1, WDT, payload)`; the precompile address and WDT target are constructor-injected so the production wiring is explicit | Contract source + test asserting the mock bridge received targetVM = 1, the real WDT address, and the byte-exact payload + **live claims on Diana** (below) |
+| The one legal target on Diana | WDT CW20 `qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt` — allowlist entry code 1 in `bridge_allowed_targets`. No self-deployed Native contract (uploads are permissioned shut network-wide) | Live params re-read in the v2 pre-flight (2026-11-16); the fest's own Cross-VM examples list "EVM token with Native vesting" — the v2 shape |
+| Atomicity / two-sided rollback | State written only after both legs succeed; bridge journals the Native leg against the EVM frame; every failure mode reverts the whole claim | Hardhat "atomicity" blocks (v1 + v2) **and on-chain proof**: a claim on a throwaway deployment pointed at a non-allowlisted target landed and reverted (tx `0xc3389c73…`, status 0) — payout 0, journal 0, claimed 0 |
+| Correct payload encoding | CW20 execute message as UTF-8 JSON, `Uint128` as string, built by the public `increaseAllowancePayload()` so frontend/tests/scripts reproduce it byte-for-byte | Test: payload equals `{"increase_allowance":{"spender":"qor1abc","amount":"100"}}` exactly |
+| Tests | Hardhat + TypeScript, positive + negative + atomicity coverage | `npx hardhat test` → **70 passing** (33 v1 + 37 v2) |
 | Live demo | Frontend demo mode simulates the full flow incl. the refusal/revert path; live mode reads real schedules from Diana via `@qorechain/evm` when `VITE_VESTCROSS_ADDRESS` is set | `frontend/` (build verified: `tsc -b && vite build` clean) |
-| Deployed on Diana testnet | `scripts/deploy.ts` targets chain ID 9800 and refuses any other chain; constructor takes the real `0x0901` + WDT | **Pre-flight PASSED live (2026-11-15), deployment PAUSED at escrow funding** — the bridge probes were executed against the real chain and are recorded in `deployments.testnet.json`; deployment itself waits on WDT availability (see Honest limits). No address/hash claimed for steps that did not run |
+| Deployed on Diana testnet | v2: `scripts/deploy-v2.ts` / `resume-v2.ts` target chain ID 9800 only; constructor takes the real `0x0901` + WDT + token | **LIVE (2026-11-16)**: VestCrossV2 `0x64ab1fABEA011CA0395Ad835EC38B590CF76C295`, vDEMO `0x93B8F1162c7b153A7F5bd9d3341256188C93D796`; two claims (txs `0x79cf1caf…`, `0x6f6d84ef…`); three-way invariant re-verified read-only by `scripts/verify-v2.ts` — full record in `deployments.testnet.json` |
 
 ---
 
@@ -155,7 +170,7 @@ function executeCrossVMCall(uint8 targetVM, string targetContract, bytes payload
 # contracts + tests
 npm install
 npx hardhat compile
-npx hardhat test          # 33 passing
+npx hardhat test          # 70 passing (33 v1 + 37 v2)
 
 # frontend demo (local, no chain needed)
 cd frontend
@@ -173,13 +188,14 @@ npm run build             # production build check (also enables live-read mode 
 3. **Open a scoped EVM window** (hybrid-signed) covering the deployment.
 4. **Pre-flight the bridge** — `scripts/plan-live-proof.md` step 0
    (allowlist + `eth_call` probes; go/no-go).
-5. **Deploy:**
+5. **Deploy:** v2 (as executed live, 2026-11-16):
    ```bash
-   DEPLOYER_PRIVATE_KEY=0x... npx hardhat run scripts/deploy.ts --network diana
+   DEPLOYER_PRIVATE_KEY=0x... npx hardhat run scripts/deploy-v2.ts --network diana
    ```
-6. Continue with the plan: `setEscrowNativeAddress` → fund escrow with
-   WDT → schedule → claim → atomic-failure demos → record every hash in
-   `deployments.testnet.json`.
+   then `setEscrowNativeAddress` → fund with vDEMO → schedules → claims →
+   refusal demos → verify with `scripts/verify-v2.ts` → record every hash
+   in `deployments.testnet.json`. (v1: `scripts/deploy.ts` + the funding
+   steps of `scripts/plan-live-proof.md`, unchanged, once WDT exists.)
 
 Deploying before step 2/3 is rejected by the EVM lane (pqc codes 26/27/28) —
 the script header repeats these prerequisites.
@@ -195,7 +211,7 @@ the script header repeats these prerequisites.
 | **Claiming more than vested** | Claims pay exactly `vested − claimed` computed on chain; there is no amount parameter to inflate | vesting-math tests + delta-only second claim test |
 | **Bridge refuses** (target not allowlisted, circuit breaker, CW20 error) | The revert propagates: `CrossVmCallFailed` carries the chain's own reason string; no state is written | "bridge refusal … leaves both sides untouched" |
 | **Inactive precompile** silently no-ops (the mainnet behaviour) | Reply must be ≥ 64 bytes (`abi.encode(bytes)` minimum) or the claim reverts `CrossVmEmptyReply` — a no-op can never be booked as a payout | "an empty reply … is treated as failure" |
-| **Underfunded escrow** (funder promises more than the Native account holds) | The CW20 transfer itself fails inside the bridge → atomic revert; the schedule stays claimable for when funding arrives | "an underfunded escrow reverts the claim atomically" |
+| **Underfunded escrow** (funder promises more than the escrow holds) | v2: `createSchedule` reverts `InsufficientEscrow` unless the contract's token pool covers the reservation. v1: the CW20 transfer itself fails inside the bridge → atomic revert; the schedule stays claimable for when funding arrives | v2 "rejects schedule creation when the escrow pool is unfunded" · v1 "an underfunded escrow reverts the claim atomically" |
 | **Funder reneges** after vesting starts | Revoke is impossible at/after the cliff (`RevokeAfterCliff`); non-revocable schedules can never be revoked | revoke test block (5 tests) |
 | **Owner rewrites the escrow address** after funding | `escrowNativeAddress` is set-once and owner-only; it is informational — the bridge derives the sender from the contract itself, so it cannot redirect funds | "cannot be set twice" · "cannot be set by a non-owner" |
 | **Reentrancy** through the payout path | OpenZeppelin `ReentrancyGuard` on `claim`; effects follow the (journaled) bridge call and the CW20 target cannot call back into the EVM lane synchronously | suite-wide state assertions after every claim |
@@ -209,12 +225,13 @@ the script header repeats these prerequisites.
   the bridge can legally move. If governance changes
   `bridge_allowed_targets`, the design must be re-planned (plan step 0
   checks this first).
-- **MockCrossVm is not the bridge.** Locally it reproduces the bridge's
+- **The mocks are not the bridge.** Locally they reproduce the bridge's
   *behaviour contract* (success / `Error(string)` refusal / empty reply /
-  CW20 insufficiency) plus a simulated CW20 ledger, so VestCross's logic
-  — ordering, reply validation, rollback — is fully testable. The real
-  journaling, gas metering and allowlist enforcement are the chain's, and
-  are only proven in the live phase (plan steps 0, 5, 6).
+  CW20 insufficiency) plus simulated CW20 ledgers, so both contracts'
+  logic — ordering, reply validation, rollback — is fully testable. The
+  real journaling, gas metering and allowlist enforcement are the
+  chain's, and for v2 they are proven in the live phase (claims + the
+  bad-target refusal, all recorded in `deployments.testnet.json`).
 - **The bridge ABI has already changed once** (the RDK ≤0.5.0 selector
   trap) and the docs warn it may change again before mainnet activation.
   The selector is pinned by a test and re-probed in plan step 0.
@@ -225,38 +242,44 @@ the script header repeats these prerequisites.
   bridge spends from the calling account's Native form, exactly as this
   design assumes (probe log in `deployments.testnet.json`).
 - **WDT acquisition on testnet is IMPOSSIBLE from our accounts today —
-  proven, not merely unproven.** Plan step 3 ran on 2026-11-15 and
-  established: the full supply (1000 WDT) has never left the minter
-  account (`qor1sxsu…vnkk48`, the token creator — a team test account)
-  since instantiation at height 65070; it is the only holder returned
-  by the token's `all_accounts` query. The faucet dispenses no WDT,
-  x/amm cannot list a CW20 (bank denoms only), cw20-base mint is
-  minter-only, and contract instantiation is permissioned shut. Six
-  routes, each with its on-chain evidence, are documented in
-  `deployments.testnet.json`. This is a chain-side distribution fact,
-  not a gap in the contract or the plan — and it blocks *every* builder
-  equally, since nobody else holds WDT either.
-- **Amounts are WDT base units.** The token's `decimals` are read from
-  the contract in plan step 0.3 and recorded before any display value is
-  claimed anywhere.
-- **Not yet deployed — paused at funding, everything upstream proven.**
-  The deployment phase executed the plan through step 0 and the step-3
-  acquisition investigation (2026-11-15). Deployment, the two-sided live
-  evidence table and the on-chain failure demos remain ready to run the
-  moment WDT becomes obtainable; their local equivalents are covered by
-  the test suite and their on-chain semantics were probed read-only
-  against the real bridge. Nothing in this README claims a live address,
-  hash or balance that does not exist.
+  proven, not merely unproven.** The full supply (1000 WDT) has never
+  left the minter account (`qor1sxsu…vnkk48`, the token creator — a team
+  test account) since instantiation at height 65070; it is the only
+  holder returned by the token's `all_accounts` query. The faucet
+  dispenses no WDT, x/amm cannot list a CW20 (bank denoms only),
+  cw20-base mint is minter-only, and contract instantiation is
+  permissioned shut. Six routes, each with on-chain evidence, are
+  documented in `deployments.testnet.json`. This blocks v1's payout
+  design for *every* builder equally — nobody else holds WDT either.
+- **What v2's Native leg is — and is not.** It is a *journal*: each claim
+  increases the beneficiary's WDT allowance from the vesting contract's
+  Native account by exactly the claimed amount. It is **not** a WDT
+  payout — no WDT moves (none can), and the allowance is a verifiable
+  ledger entry, not spendable WDT funding. The vested asset is vDEMO, a
+  valueless project test token. This is stated plainly because the
+  distinction matters: the cross-VM call, its atomicity and its public
+  verifiability are real; a WDT-denominated payout is not claimed.
+- **Amounts are base units** (6 decimals on both tokens). Live state at
+  publication: schedule 0 has paid 17,250 of its 100,000 vDEMO and keeps
+  vesting until fully claimed; schedule 1 (10,000 vDEMO, 1-day cliff) is
+  the standing pre-cliff refusal demo. Current values are whatever
+  `scripts/verify-v2.ts` reports — it reads the chain, not this file.
 
 ## Repository layout
 
 ```
-contracts/   VestCross.sol · ICrossVm.sol (the node's real bridge ABI) · MockCrossVm.sol (tests)
-test/        VestCross.test.ts — 33 tests (validation, vesting math, claims, atomicity, revoke)
-scripts/     deploy.ts — Diana (9800) deployment, refuses other chains
-             plan-live-proof.md — the rehearsed live-proof sequence (pre-flight → claim → failure demos)
+contracts/   VestCross.sol (v1) · ICrossVm.sol (the node's real bridge ABI) · MockCrossVm.sol (tests)
+contracts/v2/ VestCrossV2.sol (live) · VestCrossToken.sol (vDEMO) · MockCrossVmV2.sol (tests)
+test/        VestCross.test.ts — 33 tests · VestCrossV2.test.ts — 37 tests (three-way invariant)
+scripts/     deploy-v2.ts / resume-v2.ts / deploy-v2-badtarget.ts — the v2 live deployment
+             claim-v2.ts / refusals-v2.ts / claim-again.ts — live claims + on-chain refusal demos
+             verify-v2.ts — read-only three-way invariant check against both lanes
+             deploy.ts + plan-live-proof.md — the v1 deployment and its live-proof sequence
+             probe-live.ts — the read-only WDT go/no-go probe behind the v1 finding
 frontend/    Vite + React + TS dashboard (demo simulation + live read via @qorechain/evm)
-deployments.testnet.json — status record (NOT_DEPLOYED until the plan runs)
+deployments.testnet.json — status record (v1 history + v2LiveDeployment, LIVE)
+SELF_TOKEN_ROUTE.md — Phase 1 research: why a self-issued CW20 is impossible, why v2 is legitimate
+V2_BUILD_LOG.md — the v2 build + deployment log, step by step
 AI_USAGE.md  How AI was used to build this project, and what humans decided
 ```
 

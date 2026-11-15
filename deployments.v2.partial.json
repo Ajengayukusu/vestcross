@@ -1,0 +1,37 @@
+{
+  "network": "qorechain-diana",
+  "chainId": 9800,
+  "deployer": "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
+  "token": "0x93B8F1162c7b153A7F5bd9d3341256188C93D796",
+  "tokenDeployTx": "0xd27170cd7d836e44aa9d95a7be78fe247201601d88d6496266486a8f32273c2d",
+  "tokenDeployTxCosmos": "0F64F649D255777F22461352A79462BCA3AC461A204D65AC6AA3F1B3C5FC8D05",
+  "note": "Token deployment recovered after the original deploy run was interrupted by a service restart; verified on chain before resuming.",
+  "contract": "0x64ab1fABEA011CA0395Ad835EC38B590CF76C295",
+  "deployTx": "0x259e8a9b0dae0be1adaf799d0fd90db7266ef4a523b1db5e7b8af16021fd8a70",
+  "escrowNativeAddress": "qor1vj43l2l2qyw2qw26mq67cw94jr8hds54tqr6k8",
+  "setEscrowNativeTx": "0x1298194c19ddb1eefe61d11376f34d904e250db7d1467161d3178651f3a82cef",
+  "fundTx": "0x33f5f5ec1503e0ce8836e85e19956a27e47840d022ee9c33a02fbe9b4d3c0145",
+  "fundAmount": "200000000000",
+  "schedule0": {
+    "id": 0,
+    "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+    "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+    "totalAmount": "100000000000",
+    "cliffSeconds": 120,
+    "durationSeconds": 1200,
+    "revocable": true,
+    "createTx": "0x20eb619449141b8a66c6181866cda52ec206059bc503ccba53f5d3cb0518d33a",
+    "blockNumber": 10160430
+  },
+  "schedule1": {
+    "id": 1,
+    "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+    "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+    "totalAmount": "10000000000",
+    "cliffSeconds": 86400,
+    "durationSeconds": 172800,
+    "revocable": true,
+    "createTx": "0x4ded139cc505f201ca47ccb30602f44bb46122bee98a846d53984cae27dde0cc",
+    "blockNumber": 10160431
+  }
+}
