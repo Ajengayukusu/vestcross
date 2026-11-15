@@ -4,7 +4,7 @@
 
 **Live demo:** https://ajengayukusu.github.io/vestcross/
 
-**Demo video (≤ 3 min):** https://www.youtube.com/watch?v=59U5AUgLYoY
+**Demo video (≤ 3 min):** https://www.youtube.com/watch?v=XqlzeBx6ufk
 
 > **A vesting contract on the EVM lane whose every claim atomically writes
 > a cross-VM journal entry into an approved Native contract through the
