@@ -1,8 +1,9 @@
 /**
  * VestCross — live read layer for QoreChain Diana via @qorechain/evm.
  *
- * Active only when VITE_VESTCROSS_ADDRESS is set (see .env.example). Reads
- * are plain eth_calls against the deployed VestCross contract; this layer
+ * Reads the LIVE VestCrossV2 deployment (default address below, deployed
+ * 2026-11-16; VITE_VESTCROSS_ADDRESS can override it — see .env.example).
+ * Reads are plain eth_calls against the deployed contract; this layer
  * never signs or sends anything — claiming from a browser additionally
  * needs a wallet whose account has an open scoped EVM window on the
  * native lane (see README "Bootstrap order").
@@ -15,8 +16,12 @@ const RPC_URL =
   (import.meta.env.VITE_EVM_RPC_URL as string | undefined) ??
   "https://evm-testnet.qore.host";
 
-export const VESTCROSS_ADDRESS = import.meta.env
-  .VITE_VESTCROSS_ADDRESS as Address | undefined;
+/** The live VestCrossV2 deployment on Diana (see deployments.testnet.json). */
+export const VESTCROSS_V2_ADDRESS =
+  "0x64ab1fABEA011CA0395Ad835EC38B590CF76C295" as Address;
+
+export const VESTCROSS_ADDRESS = (import.meta.env
+  .VITE_VESTCROSS_ADDRESS as Address | undefined) ?? VESTCROSS_V2_ADDRESS;
 
 export const isLiveConfigured = Boolean(VESTCROSS_ADDRESS);
 
@@ -50,6 +55,13 @@ const VEST_ABI = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ type: "string" }],
+  },
+  {
+    type: "function",
+    name: "payoutToken",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "address" }],
   },
   {
     type: "function",
@@ -89,6 +101,7 @@ export interface LiveState {
   totalReserved: bigint;
   wdtContract: string;
   escrowNative: string;
+  payoutToken: string;
 }
 
 export async function fetchLiveState(): Promise<LiveState> {
@@ -103,10 +116,11 @@ export async function fetchLiveState(): Promise<LiveState> {
     ...base,
     functionName: "scheduleCount",
   })) as bigint;
-  const [totalReserved, wdtContract, escrowNative] = await Promise.all([
+  const [totalReserved, wdtContract, escrowNative, payoutToken] = await Promise.all([
     readContract(client, { ...base, functionName: "totalReserved" }) as Promise<bigint>,
     readContract(client, { ...base, functionName: "wdtContract" }) as Promise<string>,
     readContract(client, { ...base, functionName: "escrowNativeAddress" }) as Promise<string>,
+    readContract(client, { ...base, functionName: "payoutToken" }) as Promise<string>,
   ]);
 
   const schedules: Schedule[] = [];
@@ -138,5 +152,5 @@ export async function fetchLiveState(): Promise<LiveState> {
       })) as bigint
     );
   }
-  return { schedules, claimable, totalReserved, wdtContract, escrowNative };
+  return { schedules, claimable, totalReserved, wdtContract, escrowNative, payoutToken };
 }

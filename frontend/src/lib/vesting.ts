@@ -1,13 +1,15 @@
 /**
  * VestCross — shared vesting logic for the frontend.
  *
- * The math here mirrors contracts/VestCross.sol EXACTLY (the demo mode is a
+ * The math here mirrors the vesting contracts EXACTLY (the demo mode is a
  * faithful simulation of the contract, not an approximation):
  *   - vested = 0 before start+cliff
  *   - vested = total * (t - start) / duration, linear, integer division
  *   - vested = total at/after start+duration
  *   - a revoked schedule vests nothing beyond what was already claimed
- * Amounts are WDT base units (bigint), matching the contract.
+ * Amounts are payout-token base units (bigint), matching the contracts:
+ * vDEMO base units in the LIVE v2 deployment, WDT base units in the
+ * original (undeployed) v1 design.
  */
 
 /** CrossVM Bridge precompile on Diana (chain parameter, verified live). */
@@ -44,7 +46,7 @@ export interface ClaimRecord {
   status: "success" | "reverted";
   /** What happened on the EVM lane (tx / event / revert). */
   evmSide: string;
-  /** What happened on the Native lane (CW20 transfer / nothing). */
+  /** What happened on the Native lane (WDT allowance journal / nothing). */
   nativeSide: string;
   /** The exact bridge payload for successful claims. */
   payload?: string;
@@ -65,11 +67,22 @@ export function claimableAt(s: Schedule, t: number): bigint {
 }
 
 /**
- * The exact CW20 execute message VestCross.claim sends through the bridge,
- * byte-for-byte identical to the contract's transferPayload().
+ * The exact CW20 execute message the v1 VestCross.claim sends through the
+ * bridge, byte-for-byte identical to the v1 contract's transferPayload().
+ * (v1 is not deployed — see LIVE_V2.honestNote below.)
  */
 export function transferPayload(recipient: string, amount: bigint): string {
   return `{"transfer":{"recipient":"${recipient}","amount":"${amount.toString()}"}}`;
+}
+
+/**
+ * The exact CW20 execute message VestCrossV2.claim sends through the
+ * bridge, byte-for-byte identical to the v2 contract's
+ * increaseAllowancePayload(): every claim journals an allowance on the
+ * allowlisted WDT contract for the beneficiary's Native address.
+ */
+export function journalPayload(spender: string, amount: bigint): string {
+  return `{"increase_allowance":{"spender":"${spender}","amount":"${amount.toString()}"}}`;
 }
 
 /** 1_000_000 -> "1,000,000" (en-US grouping) */
@@ -104,3 +117,62 @@ export const DEMO = {
 /** The refusal string the real bridge produces for non-allowlisted targets. */
 export const BRIDGE_REFUSAL =
   "cross-VM bridge call refused: target cosmwasm:<addr> is not allowlisted";
+
+// ── LIVE v2 deployment on Diana (deployed 2026-11-16) ────────────────────
+// Verified on chain; full record in deployments.testnet.json
+// (v2LiveDeployment) in the repo, re-checkable any time with
+// scripts/verify-v2.ts.
+export const EXPLORER = "https://explore.qore.network";
+export const explorerTx = (hash: string) => `${EXPLORER}/tx/${hash}`;
+export const explorerAddress = (addr: string) => `${EXPLORER}/address/${addr}`;
+
+export const LIVE_V2 = {
+  status: "LIVE",
+  deployedAt: "2026-11-16",
+  contract: "0x64ab1fABEA011CA0395Ad835EC38B590CF76C295",
+  contractDeployTx:
+    "0x259e8a9b0dae0be1adaf799d0fd90db7266ef4a523b1db5e7b8af16021fd8a70",
+  contractNative: "qor1vj43l2l2qyw2qw26mq67cw94jr8hds54tqr6k8",
+  token: "0x93B8F1162c7b153A7F5bd9d3341256188C93D796",
+  tokenName: "VestCross Demo Token",
+  tokenSymbol: "vDEMO",
+  tokenDecimals: 6,
+  tokenDeployTx:
+    "0xd27170cd7d836e44aa9d95a7be78fe247201601d88d6496266486a8f32273c2d",
+  deployer: "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
+  beneficiary: "0x8d0A347d472568DfB6189c84603302d044F0107b",
+  beneficiaryNative: "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+  claims: [
+    {
+      amount: "12,000 vDEMO",
+      tx: "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
+      block: 10160531,
+    },
+    {
+      amount: "5,250 vDEMO",
+      tx: "0x6f6d84ef45d08c610b96c52d46eb7cf224b0fa39919acf9a5156eeae8fa755f1",
+      block: 10160574,
+    },
+  ],
+  invariant:
+    "ERC20 paid to beneficiary 17,250 vDEMO == WDT allowance journal 17,250 vDEMO == contract claimedAmount 17,250 vDEMO",
+  refusals: [
+    {
+      label: "Pre-cliff claim (schedule #1, 24 h cliff not reached)",
+      detail: "reverted with NothingToClaim — nothing moved",
+      tx: "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
+      block: 10160533,
+    },
+    {
+      label: "Claim via a throwaway deployment pointed at a non-allowlisted Native target",
+      detail:
+        "reverted with CrossVmCallFailed (bridge allowlist refusal) — payout 0, journal 0, claimed 0",
+      tx: "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
+      block: 10160553,
+    },
+  ],
+  tests: "70 automated tests pass (33 v1 + 37 v2), including dedicated atomicity suites",
+  verifyScript: "scripts/verify-v2.ts",
+  honestNote:
+    "The Native leg is an allowance journal on the allowlisted WDT contract — no WDT moves and none is paid out; the vested asset is vDEMO, this project's own ERC20 (a test token with no value). The original v1 design — paying the CW20 WDT itself from a Native escrow — remains undeployed: the entire WDT supply sits untouched in its minter's account (its only holder), every acquisition route is closed, and new CW20 instantiation is permissioned shut chain-wide. v1 executes unchanged the moment any WDT becomes obtainable.",
+};

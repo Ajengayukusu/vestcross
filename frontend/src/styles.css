@@ -109,6 +109,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .table th, .table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .table th { color: var(--muted); font-weight: 600; }
 
+a { color: var(--accent); }
 .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .small { font-size: 12px; }
 .muted { color: var(--muted); }
