@@ -4,7 +4,7 @@
 
 **Live demo:** https://ajengayukusu.github.io/vestcross/
 
-**Demo video (≤ 3 min):** https://www.youtube.com/watch?v=lKjuuKM05Kc
+**Demo video (≤ 3 min):** https://www.youtube.com/watch?v=59U5AUgLYoY
 
 > **A vesting contract on the EVM lane that pays out a CosmWasm token on the
 > Native lane — atomically, in one transaction, through the CrossVM Bridge.**
