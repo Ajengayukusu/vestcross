@@ -72,20 +72,20 @@ export function transferPayload(recipient: string, amount: bigint): string {
   return `{"transfer":{"recipient":"${recipient}","amount":"${amount.toString()}"}}`;
 }
 
-/** 1_000_000 -> "1.000.000" (id-ID grouping) */
+/** 1_000_000 -> "1,000,000" (en-US grouping) */
 export function fmtUnits(v: bigint): string {
-  return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 export function fmtDuration(sec: number): string {
-  if (sec % 86400 === 0) return `${sec / 86400} hari`;
-  if (sec % 3600 === 0) return `${sec / 3600} jam`;
-  if (sec % 60 === 0) return `${sec / 60} menit`;
-  return `${sec} detik`;
+  if (sec % 86400 === 0) return `${sec / 86400} ${sec === 86400 ? "day" : "days"}`;
+  if (sec % 3600 === 0) return `${sec / 3600} ${sec === 3600 ? "hour" : "hours"}`;
+  if (sec % 60 === 0) return `${sec / 60} ${sec === 60 ? "minute" : "minutes"}`;
+  return `${sec} ${sec === 1 ? "second" : "seconds"}`;
 }
 
 export function fmtTime(unixSec: number): string {
-  return new Date(unixSec * 1000).toLocaleString("id-ID", {
+  return new Date(unixSec * 1000).toLocaleString("en-US", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",

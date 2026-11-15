@@ -81,9 +81,9 @@ function ProgressBar({ s, now }: { s: Schedule; now: number }) {
         <div className="seg vested" style={{ width: `${vestedPct}%` }} />
       </div>
       <div className="barlegend">
-        <span>Terbayar {fmtUnits(s.claimedAmount)}</span>
+        <span>Paid {fmtUnits(s.claimedAmount)}</span>
         <span>
-          Tervesting {fmtUnits(vested)} / {fmtUnits(s.totalAmount)} WDT
+          Vested {fmtUnits(vested)} / {fmtUnits(s.totalAmount)} WDT
         </span>
       </div>
     </div>
@@ -110,15 +110,15 @@ function ScheduleCard({
   return (
     <div className="card">
       <div className="cardhead">
-        <strong>Jadwal #{s.id}</strong>
+        <strong>Schedule #{s.id}</strong>
         {s.revoked ? (
-          <span className="badge bad">DIREVOKASI</span>
+          <span className="badge bad">REVOKED</span>
         ) : claimable > 0n ? (
-          <span className="badge ok">BISA DIKLAIM</span>
+          <span className="badge ok">CLAIMABLE</span>
         ) : now < s.start + s.cliffSeconds ? (
-          <span className="badge warn">BELUM CLIFF</span>
+          <span className="badge warn">NOT YET AT CLIFF</span>
         ) : (
-          <span className="badge">BERJALAN</span>
+          <span className="badge">IN PROGRESS</span>
         )}
       </div>
       <ProgressBar s={s} now={now} />
@@ -126,9 +126,9 @@ function ScheduleCard({
         <div><dt>Beneficiary (EVM)</dt><dd className="mono">{s.beneficiary}</dd></div>
         <div><dt>Beneficiary (Native)</dt><dd className="mono">{s.beneficiaryNative}</dd></div>
         <div><dt>Funder</dt><dd className="mono">{s.funder}</dd></div>
-        <div><dt>Cliff / Durasi</dt><dd>{fmtDuration(s.cliffSeconds)} / {fmtDuration(s.durationSeconds)}</dd></div>
-        <div><dt>Mulai</dt><dd>{fmtTime(s.start)}</dd></div>
-        <div><dt>Dapat diklaim</dt><dd><strong>{fmtUnits(claimable)} WDT</strong></dd></div>
+        <div><dt>Cliff / Duration</dt><dd>{fmtDuration(s.cliffSeconds)} / {fmtDuration(s.durationSeconds)}</dd></div>
+        <div><dt>Start</dt><dd>{fmtTime(s.start)}</dd></div>
+        <div><dt>Claimable</dt><dd><strong>{fmtUnits(claimable)} WDT</strong></dd></div>
       </dl>
       {!readOnly && (
         <div className="actions">
@@ -144,12 +144,12 @@ function ScheduleCard({
             disabled={!canRevoke}
             title={
               canRevoke
-                ? "Revoke hanya bisa sebelum cliff"
-                : "Sudah lewat cliff / tidak revocable / sudah direvokasi"
+                ? "Revoke is only possible before the cliff"
+                : "Past the cliff / not revocable / already revoked"
             }
             onClick={() => onRevoke?.(s)}
           >
-            Revoke (pra-cliff)
+            Revoke (pre-cliff)
           </button>
         </div>
       )}
@@ -218,8 +218,8 @@ export default function App() {
     const amount = claimableAt(s, now);
     if (amount === 0n) return;
     if (bridgeFailure) {
-      // Simulasikan bridge menolak eksekusi Native: SELURUH claim revert,
-      // tidak ada state yang berubah di kedua sisi (atomicity).
+      // Simulate the bridge refusing the Native execution: the WHOLE claim
+      // reverts, and no state changes on either side (atomicity).
       setHistory((h) => [
         {
           id: h.length,
@@ -229,13 +229,13 @@ export default function App() {
           totalClaimed: s.claimedAmount,
           status: "reverted",
           evmSide: `tx revert — CrossVmCallFailed("${BRIDGE_REFUSAL}")`,
-          nativeSide: "tidak ada perubahan — transfer CW20 tidak pernah dieksekusi / ter-rollback",
+          nativeSide: "no change — the CW20 transfer was never executed / was rolled back",
         },
         ...h,
       ]);
       setNotice(
-        `Claim jadwal #${s.id} REVERT secara atomik: bridge menolak panggilan Native, ` +
-          `klaim tidak tercatat dan saldo kedua sisi tidak berubah.`
+        `Claim for schedule #${s.id} REVERTED atomically: the bridge refused the Native call, ` +
+          `the claim was not recorded and neither side's balance changed.`
       );
       return;
     }
@@ -258,15 +258,15 @@ export default function App() {
         amount,
         totalClaimed: s.claimedAmount + amount,
         status: "success",
-        evmSide: "event VestingClaimed tercatat SETELAH bridge sukses",
+        evmSide: "VestingClaimed event recorded AFTER the bridge succeeded",
         nativeSide: `CW20 WDT transfer escrow → beneficiary: +${fmtUnits(amount)} WDT`,
         payload,
       },
       ...h,
     ]);
     setNotice(
-      `Claim jadwal #${s.id} sukses: ${fmtUnits(amount)} WDT berpindah di Native lane ` +
-        `dalam tx EVM yang sama.`
+      `Claim for schedule #${s.id} succeeded: ${fmtUnits(amount)} WDT moved on the Native lane ` +
+        `within the same EVM transaction.`
     );
   }
 
@@ -275,8 +275,8 @@ export default function App() {
       all.map((x) => (x.id === s.id ? { ...x, revoked: true } : x))
     );
     setNotice(
-      `Jadwal #${s.id} direvokasi funder sebelum cliff — reservasi ` +
-        `${fmtUnits(s.totalAmount - s.claimedAmount)} WDT dilepas, tidak ada yang terbayar.`
+      `Schedule #${s.id} was revoked by the funder before the cliff — a reservation of ` +
+        `${fmtUnits(s.totalAmount - s.claimedAmount)} WDT was released and nothing was paid out.`
     );
   }
 
@@ -286,11 +286,11 @@ export default function App() {
     const cliff = Number(fCliffDays) * DAY;
     const dur = Number(fDurDays) * DAY;
     if (total <= 0n || !fNative.trim()) {
-      setNotice("Form tidak valid: total harus > 0 dan alamat Native wajib diisi (meniru validasi kontrak).");
+      setNotice("Invalid form: total must be > 0 and the Native address is required (mirrors the contract's validation).");
       return;
     }
     if (cliff > dur) {
-      setNotice("Form tidak valid: cliff tidak boleh melebihi durasi (kontrak akan revert CliffExceedsDuration).");
+      setNotice("Invalid form: the cliff must not exceed the duration (the contract would revert with CliffExceedsDuration).");
       return;
     }
     const s: Schedule = {
@@ -307,8 +307,8 @@ export default function App() {
       revoked: false,
     };
     setSchedules((all) => [...all, s]);
-    setEscrowBalance((b) => b + total); // demo: funder "mengisi" escrow Native
-    setNotice(`Jadwal #${s.id} dibuat; escrow Native demo ditambah ${fmtUnits(total)} WDT.`);
+    setEscrowBalance((b) => b + total); // demo: the funder "tops up" the Native escrow
+    setNotice(`Schedule #${s.id} created; the demo Native escrow was topped up with ${fmtUnits(total)} WDT.`);
   }
 
   return (
@@ -317,19 +317,19 @@ export default function App() {
         <div>
           <h1>VestCross</h1>
           <p className="sub">
-            Vesting WDT lintas-VM: jadwal di EVM, token di Native (CW20),
-            dibayar atomik lewat CrossVM Bridge precompile.
+            Cross-VM WDT vesting: the schedule lives on the EVM, the token on
+            Native (CW20), paid atomically through the CrossVM Bridge precompile.
           </p>
         </div>
         <div className="badges">
           {mode === "demo" ? (
-            <span className="badge warn">MODE DEMO — simulasi lokal</span>
+            <span className="badge warn">DEMO MODE — local simulation</span>
           ) : (
             <span className="badge ok">LIVE READ — Diana testnet</span>
           )}
           {isLiveConfigured && (
             <button className="ghost" onClick={() => setMode(mode === "demo" ? "live" : "demo")}>
-              {mode === "demo" ? "Lihat data live" : "Kembali ke demo"}
+              {mode === "demo" ? "View live data" : "Back to demo"}
             </button>
           )}
         </div>
@@ -346,17 +346,17 @@ export default function App() {
       {mode === "live" ? (
         <section>
           <div className="panel">
-            <h2>Data live dari Diana (@qorechain/evm)</h2>
+            <h2>Live data from Diana (@qorechain/evm)</h2>
             <p className="mono small">VestCross: {VESTCROSS_ADDRESS}</p>
-            <p className="mono small">Bridge (dari @qorechain/evm PRECOMPILE_ADDRESSES): {BRIDGE_ADDRESS}</p>
-            {liveError && <p className="bad-text">Gagal membaca chain: {liveError}</p>}
-            {!live && !liveError && <p>Membaca…</p>}
+            <p className="mono small">Bridge (from @qorechain/evm PRECOMPILE_ADDRESSES): {BRIDGE_ADDRESS}</p>
+            {liveError && <p className="bad-text">Failed to read the chain: {liveError}</p>}
+            {!live && !liveError && <p>Loading…</p>}
             {live && (
               <>
                 <p>
                   WDT contract: <span className="mono">{live.wdtContract}</span><br />
-                  Escrow Native: <span className="mono">{live.escrowNative || "(belum di-set)"}</span><br />
-                  Total ter-reserve: <strong>{fmtUnits(live.totalReserved)} WDT</strong>
+                  Native escrow: <span className="mono">{live.escrowNative || "(not set)"}</span><br />
+                  Total reserved: <strong>{fmtUnits(live.totalReserved)} WDT</strong>
                 </p>
                 <div className="grid">
                   {live.schedules.map((s, i) => (
@@ -369,12 +369,12 @@ export default function App() {
                     />
                   ))}
                 </div>
-                {live.schedules.length === 0 && <p>Belum ada jadwal on-chain.</p>}
+                {live.schedules.length === 0 && <p>No schedules on-chain yet.</p>}
               </>
             )}
             <p className="small muted">
-              Mode live bersifat read-only. Claim dari browser membutuhkan wallet
-              dengan scoped EVM window aktif — lihat README.
+              Live mode is read-only. Claiming from the browser requires a
+              wallet with an active scoped EVM window — see the README.
             </p>
           </div>
         </section>
@@ -382,13 +382,13 @@ export default function App() {
         <>
           <div className="panel controls">
             <div>
-              <strong>Jam demo:</strong> {fmtTime(now)}{" "}
-              <span className="muted small">(berjalan real-time; lompat untuk uji cliff)</span>
+              <strong>Demo clock:</strong> {fmtTime(now)}{" "}
+              <span className="muted small">(runs in real time; jump ahead to test the cliff)</span>
             </div>
             <div className="actions">
-              <button className="ghost" onClick={() => setNow((n) => n + 3600)}>+1 jam</button>
-              <button className="ghost" onClick={() => setNow((n) => n + DAY)}>+1 hari</button>
-              <button className="ghost" onClick={() => setNow((n) => n + 10 * DAY)}>+10 hari</button>
+              <button className="ghost" onClick={() => setNow((n) => n + 3600)}>+1 hour</button>
+              <button className="ghost" onClick={() => setNow((n) => n + DAY)}>+1 day</button>
+              <button className="ghost" onClick={() => setNow((n) => n + 10 * DAY)}>+10 days</button>
             </div>
             <label className="switch">
               <input
@@ -396,24 +396,24 @@ export default function App() {
                 checked={bridgeFailure}
                 onChange={(e) => setBridgeFailure(e.target.checked)}
               />
-              Simulasikan penolakan Native (bridge refuse) — claim berikutnya
-              harus revert atomik
+              Simulate a Native refusal (bridge refuse) — the next claim must
+              revert atomically
             </label>
           </div>
 
           <div className="stats">
             <div className="stat">
-              <span>Escrow Native (demo)</span>
+              <span>Native escrow (demo)</span>
               <strong>{fmtUnits(escrowBalance)} WDT</strong>
               <span className="mono small">{DEMO.escrowNative}</span>
             </div>
             <div className="stat">
-              <span>Total ter-reserve</span>
+              <span>Total reserved</span>
               <strong>{fmtUnits(totalReserved)} WDT</strong>
-              <span className="small muted">jumlah (total − terbayar) jadwal aktif</span>
+              <span className="small muted">sum of (total − paid) across active schedules</span>
             </div>
             <div className="stat">
-              <span>Saldo Native beneficiary</span>
+              <span>Beneficiary Native balance</span>
               <strong>{fmtUnits(nativeBalances[DEMO.beneficiaryNative] ?? 0n)} WDT</strong>
               <span className="mono small">{DEMO.beneficiaryNative}</span>
             </div>
@@ -421,7 +421,7 @@ export default function App() {
 
           {notice && <div className="notice">{notice}</div>}
 
-          <h2>Jadwal vesting</h2>
+          <h2>Vesting schedules</h2>
           <div className="grid">
             {schedules.map((s) => (
               <ScheduleCard
@@ -436,10 +436,10 @@ export default function App() {
           </div>
 
           <div className="panel">
-            <h2>Buat jadwal baru</h2>
+            <h2>Create new schedule</h2>
             <form className="form" onSubmit={doCreate}>
               <label>
-                Alamat Native beneficiary (qor1…)
+                Beneficiary Native address (qor1…)
                 <input value={fNative} onChange={(e) => setFNative(e.target.value)} />
               </label>
               <label>
@@ -447,37 +447,37 @@ export default function App() {
                 <input value={fTotal} onChange={(e) => setFTotal(e.target.value.replace(/[^0-9]/g, ""))} />
               </label>
               <label>
-                Cliff (hari)
+                Cliff (days)
                 <input value={fCliffDays} onChange={(e) => setFCliffDays(e.target.value.replace(/[^0-9]/g, ""))} />
               </label>
               <label>
-                Durasi (hari)
+                Duration (days)
                 <input value={fDurDays} onChange={(e) => setFDurDays(e.target.value.replace(/[^0-9]/g, ""))} />
               </label>
               <label className="switch">
                 <input type="checkbox" checked={fRevocable} onChange={(e) => setFRevocable(e.target.checked)} />
-                Revocable (hanya sebelum cliff)
+                Revocable (only before the cliff)
               </label>
-              <button className="primary" type="submit">Buat jadwal</button>
+              <button className="primary" type="submit">Create schedule</button>
             </form>
             <p className="small muted">
-              Di demo ini beneficiary EVM selalu akun demo; di kontrak asli,
-              alamat EVM + Native adalah pasangan akun yang sama (satu akun,
-              dua bentuk alamat).
+              In this demo the EVM beneficiary is always the demo account; in
+              the real contract, the EVM and Native addresses are two forms of
+              the same account (one account, two address formats).
             </p>
           </div>
 
-          <h2>Riwayat klaim — bukti dua sisi</h2>
+          <h2>Claim history — two-sided proof</h2>
           <div className="panel">
             {history.length === 0 && (
-              <p className="muted">Belum ada klaim. Lewati cliff jadwal #0 lalu klik Claim.</p>
+              <p className="muted">No claims yet. Move past schedule #0's cliff, then click Claim.</p>
             )}
             {history.length > 0 && (
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Waktu</th><th>Jadwal</th><th>Jumlah</th><th>Status</th>
-                    <th>Sisi EVM</th><th>Sisi Native</th><th>Payload bridge</th>
+                    <th>Time</th><th>Schedule</th><th>Amount</th><th>Status</th>
+                    <th>EVM side</th><th>Native side</th><th>Bridge payload</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -488,9 +488,9 @@ export default function App() {
                       <td>{r.status === "success" ? `${fmtUnits(r.amount)} WDT` : "—"}</td>
                       <td>
                         {r.status === "success" ? (
-                          <span className="badge ok">SUKSES</span>
+                          <span className="badge ok">SUCCESS</span>
                         ) : (
-                          <span className="badge bad">REVERT (atomik)</span>
+                          <span className="badge bad">REVERTED (atomic)</span>
                         )}
                       </td>
                       <td className="small">{r.evmSide}</td>
@@ -504,19 +504,20 @@ export default function App() {
               </table>
             )}
             <p className="small muted">
-              Pada deployment live, setiap baris sukses dibuktikan oleh dua
-              artefak on-chain: event <span className="mono">VestingClaimed</span> pada
-              tx EVM dan perubahan saldo CW20 beneficiary di Native lane
-              (diquery via REST) — lihat scripts/plan-live-proof.md langkah 5.
+              On a live deployment, every successful row is proven by two
+              on-chain artifacts: the <span className="mono">VestingClaimed</span> event
+              on the EVM transaction and the beneficiary's CW20 balance change
+              on the Native lane (queried via REST) — see
+              scripts/plan-live-proof.md step 5.
             </p>
           </div>
         </>
       )}
 
       <footer className="foot muted small">
-        VestCross — QoreChain Developer Fest “Build Before Q-Day”, kategori
-        Cross-VM. Testnet Diana (EVM chain ID 9800). Demo lokal tidak
-        menyentuh chain; tidak ada dana asli yang bergerak.
+        VestCross — QoreChain Developer Fest “Build Before Q-Day”, Cross-VM
+        category. Diana testnet (EVM chain ID 9800). The local demo does not
+        touch the chain; no real funds move.
       </footer>
     </div>
   );
