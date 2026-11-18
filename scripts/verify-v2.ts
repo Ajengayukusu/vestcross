@@ -2,14 +2,18 @@
 /**
  * verify-v2.ts — read-only verification of the VestCross v2 live proof.
  *
- * The three-way invariant, checked against BOTH lanes independently:
+ * The three-way invariant, checked against BOTH lanes independently,
+ * summed over ALL schedules of the main deployment:
  *   (a) EVM payout:  beneficiary's VestCrossToken balance
- *   (b) EVM books:   VestCrossV2 schedule claimedAmount
+ *   (b) EVM books:   sum of every schedule's claimedAmount
  *   (c) Native side: WDT allowance(owner = vesting contract's qor1 form,
  *                    spender = beneficiary's qor1) via a CosmWasm smart
  *                    query — no bridge, no trust in our own contract.
- * Plus the negative space: schedule 1 (pre-cliff) claimed nothing, and
- * the bad-target throwaway produced NO allowance and NO payout.
+ * Plus the negative space: the bad-target throwaway produced NO
+ * allowance and NO payout. (Schedule 1's pre-cliff refusal is historical
+ * evidence in deployments.v2.claims.json; the schedule itself was
+ * claimed in full on 19 Nov 2026, after its cliff and duration had
+ * passed, during the volume round.)
  *
  * Usage: npx ts-node scripts/verify-v2.ts
  */
@@ -49,8 +53,17 @@ async function main(): Promise<void> {
   const token = new ethers.Contract(partial.token, TOKEN_ABI, provider);
   const vestBad = new ethers.Contract(bad.badTargetContract, VEST_ABI, provider);
 
-  const s0 = await vest.getSchedule(0);
-  const s1 = await vest.getSchedule(1);
+  const count = Number(await vest.scheduleCount());
+  const schedules: Record<string, { totalAmount: string; claimedAmount: string }> = {};
+  let claimedSum = 0n;
+  for (let i = 0; i < count; i++) {
+    const s = await vest.getSchedule(i);
+    schedules[String(i)] = {
+      totalAmount: s.totalAmount.toString(),
+      claimedAmount: s.claimedAmount.toString(),
+    };
+    claimedSum += s.claimedAmount;
+  }
   const benTokenBal = await token.balanceOf(BEN_EVM);
   const vestTokenBal = await token.balanceOf(partial.contract);
   const totalReserved = await vest.totalReserved();
@@ -65,15 +78,15 @@ async function main(): Promise<void> {
   const sBad = await vestBad.getSchedule(0);
 
   const checks = {
+    scheduleCount: count,
+    schedules,
     erc20PaidToBeneficiary: benTokenBal.toString(),
-    contractClaimedAmount: s0.claimedAmount.toString(),
+    contractClaimedAmount: claimedSum.toString(),
     wdtAllowanceJournal: allowMain.allowance,
     invariantHolds:
-      benTokenBal.toString() === s0.claimedAmount.toString() &&
-      s0.claimedAmount.toString() === allowMain.allowance &&
+      benTokenBal.toString() === claimedSum.toString() &&
+      claimedSum.toString() === allowMain.allowance &&
       BigInt(allowMain.allowance) > 0n,
-    schedule1Claimed: s1.claimedAmount.toString(),
-    schedule1Untouched: s1.claimedAmount.toString() === "0",
     badTargetClaimed: sBad.claimedAmount.toString(),
     badTargetAllowance: allowBad.allowance,
     badTargetUntouched: sBad.claimedAmount.toString() === "0" && allowBad.allowance === "0",
@@ -91,7 +104,7 @@ async function main(): Promise<void> {
     JSON.stringify(checks, null, 2)
   );
   if (!checks.invariantHolds) throw new Error("THREE-WAY INVARIANT DOES NOT HOLD");
-  if (!checks.schedule1Untouched || !checks.badTargetUntouched) {
+  if (!checks.badTargetUntouched) {
     throw new Error("NEGATIVE-SPACE CHECK FAILED");
   }
   console.log("ALL V2 LIVE CHECKS PASS");

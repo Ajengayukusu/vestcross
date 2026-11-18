@@ -56,10 +56,11 @@
 5. **Deployment status — LIVE (v2, deployed 2026-11-16).**
    VestCrossV2 `0x64ab1fABEA011CA0395Ad835EC38B590CF76C295` escrows the
    project ERC20 **vDEMO** (`0x93B8F1162c7b153A7F5bd9d3341256188C93D796`)
-   and journals every claim into WDT. Two real claims are on chain
-   (12,000 + 5,250 vDEMO); the three-way invariant was verified by an
-   independent smart query: paid **17,250,000,000** == allowance
-   **17,250,000,000** == claimedAmount **17,250,000,000** base units. A
+   and journals every claim into WDT. Five real claims are on chain
+   across three schedules — **210,000 vDEMO claimed in total**; the
+   three-way invariant was verified by an independent smart query:
+   paid **210,000,000,000** == allowance **210,000,000,000** ==
+   claimedAmount **210,000,000,000** base units. A
    pre-cliff claim and a claim on a throwaway deployment pointed at a
    non-allowlisted target both landed on chain and reverted (status 0),
    moving nothing — the atomicity proof. **Why not v1's design live?**
@@ -260,9 +261,10 @@ the script header repeats these prerequisites.
   distinction matters: the cross-VM call, its atomicity and its public
   verifiability are real; a WDT-denominated payout is not claimed.
 - **Amounts are base units** (6 decimals on both tokens). Live state at
-  publication: schedule 0 has paid 17,250 of its 100,000 vDEMO and keeps
-  vesting until fully claimed; schedule 1 (10,000 vDEMO, 1-day cliff) is
-  the standing pre-cliff refusal demo. Current values are whatever
+  publication: all three schedules are fully claimed — 210,000 of
+  210,000 vDEMO paid out (100,000 + 10,000 + 100,000); schedule 1 was
+  the pre-cliff refusal demo and was claimed once its cliff and
+  duration had passed. Current values are whatever
   `scripts/verify-v2.ts` reports — it reads the chain, not this file.
 
 ## Repository layout
@@ -273,6 +275,7 @@ contracts/v2/ VestCrossV2.sol (live) · VestCrossToken.sol (vDEMO) · MockCrossV
 test/        VestCross.test.ts — 33 tests · VestCrossV2.test.ts — 37 tests (three-way invariant)
 scripts/     deploy-v2.ts / resume-v2.ts / deploy-v2-badtarget.ts — the v2 live deployment
              claim-v2.ts / refusals-v2.ts / claim-again.ts — live claims + on-chain refusal demos
+             volume-fund-schedule.ts / volume-claims.ts / volume-claim2.ts — the 19 Nov volume round
              verify-v2.ts — read-only three-way invariant check against both lanes
              deploy.ts + plan-live-proof.md — the v1 deployment and its live-proof sequence
              probe-live.ts — the read-only WDT go/no-go probe behind the v1 finding

@@ -11,7 +11,7 @@
       "beneficiaryIdx1": {
         "cosmos": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
         "evm": "0x8d0A347d472568DfB6189c84603302d044F0107b",
-        "evmWindow": "live but only 1 of 3 txs remaining — a fresh window would be opened for the claim steps once funding is possible",
+        "evmWindow": "live but only 1 of 3 txs remaining \u2014 a fresh window would be opened for the claim steps once funding is possible",
         "pqc": "found:true, possession_proven:true",
         "uqor": "744238",
         "wdtBalance": "0"
@@ -19,7 +19,7 @@
       "deployerIdx0": {
         "cosmos": "qor1dcse33ce3n3mwxxleuupqvfqeq6xl552zm2ltk",
         "evm": "0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
-        "evmWindow": "live, opened 10087826, expiry 10105106, 11 of 20 txs remaining, 14276775 uqor of value budget remaining — sufficient for deploy + interactions, no new window needed",
+        "evmWindow": "live, opened 10087826, expiry 10105106, 11 of 20 txs remaining, 14276775 uqor of value budget remaining \u2014 sufficient for deploy + interactions, no new window needed",
         "pqc": "found:true, possession_proven:true",
         "uqor": "91462407",
         "wdtBalance": "0"
@@ -33,7 +33,7 @@
       ],
       "enabled": true,
       "endpoint": "GET /qorechain/crossvm/v1/params",
-      "verdict": "WDT still allowlisted, code id 1 — GO for the bridge design",
+      "verdict": "WDT still allowlisted, code id 1 \u2014 GO for the bridge design",
       "wdtPin": {
         "code_id": "1",
         "target": "cosmwasm:qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt"
@@ -49,12 +49,12 @@
       {
         "label": "WDT target, payload {}",
         "result": "REVERT: cross-VM call failed: Error parsing into type cw20::msg::Cw20ExecuteMsg: Invalid type: execute wasm contract failed: CosmWasm contract execution failed.",
-        "verdict": "the call REACHED the WDT contract — the allowlist route works end to end"
+        "verdict": "the call REACHED the WDT contract \u2014 the allowlist route works end to end"
       },
       {
         "label": "WDT transfer {recipient: idx1, amount: 1000}, from = predicted VestCross contract address 0xF5aea48e87bF4DDcbFD961BFE3332dFf0f20E4e2 (deployer nonce 33)",
         "result": "REVERT: cross-VM call failed: Overflow: Cannot Sub with 0 and 1000: execute wasm contract failed: CosmWasm contract execution failed.",
-        "verdict": "CW20 insufficient-balance (sender holds 0 WDT), NOT a bridge refusal — bridge semantics and sender=caller identity confirmed empirically"
+        "verdict": "CW20 insufficient-balance (sender holds 0 WDT), NOT a bridge refusal \u2014 bridge semantics and sender=caller identity confirmed empirically"
       },
       {
         "label": "same WDT transfer, from = deployer EVM 0x6E2198c7198Ce3B718DFCf38103120C8346fD28A",
@@ -68,7 +68,7 @@
       "probeScript": "foundation-spike/account-tools/vc-probe0.mjs (read-only eth_call probes; no secrets printed, no state changed)",
       "routesInvestigated": [
         {
-          "finding": "Dispenses 100 QOR + fUSD + fETH + fBTC (bank denoms) per claim — verified in the foundation spike phase. WDT is not among the dispensed assets.",
+          "finding": "Dispenses 100 QOR + fUSD + fETH + fBTC (bank denoms) per claim \u2014 verified in the foundation spike phase. WDT is not among the dispensed assets.",
           "route": "Fest faucet / dashboard (dashboard.qorechain.io/faucet)"
         },
         {
@@ -92,7 +92,7 @@
           "route": "Buy/receive from an existing holder"
         }
       ],
-      "verdict": "NO WORKING ROUTE from any account we control — live phase stopped here per plan, before any deployment or funds moved",
+      "verdict": "NO WORKING ROUTE from any account we control \u2014 live phase stopped here per plan, before any deployment or funds moved",
       "whatWouldUnblock": "Any ONE of: (a) the WDT minter/creator account transfers some WDT to the VestCross escrow Native address (or to any account we control), (b) the fest adds WDT to the faucet/dashboard dispenser, (c) governance or the token team seeds a WDT AMM pool or a public WDT faucet contract. With WDT in hand, plan steps 2-7 execute unchanged: the bridge, ABI, sender identity and account windows are all pre-verified above."
     },
     "wdtTokenInfo": {
@@ -108,7 +108,7 @@
     }
   },
   "network": "qorechain-diana",
-  "status": "v1 NOT_DEPLOYED (unchanged: WDT escrow cannot be funded — see liveProofPreflight.wdtAcquisition). v2 LIVE on Diana since 2026-11-16 — see v2LiveDeployment.",
+  "status": "v1 NOT_DEPLOYED (unchanged: WDT escrow cannot be funded \u2014 see liveProofPreflight.wdtAcquisition). v2 LIVE on Diana since 2026-11-16 \u2014 see v2LiveDeployment.",
   "wdtCw20": "qor14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s93uuqt",
   "v2LiveDeployment": {
     "status": "LIVE",
@@ -142,7 +142,16 @@
     "crossVmPrecompile": "0x0000000000000000000000000000000000000901",
     "funding": {
       "amount": "200000000000",
-      "tx": "0x33f5f5ec1503e0ce8836e85e19956a27e47840d022ee9c33a02fbe9b4d3c0145"
+      "tx": "0x33f5f5ec1503e0ce8836e85e19956a27e47840d022ee9c33a02fbe9b4d3c0145",
+      "additional": [
+        {
+          "amount": "50000000000",
+          "tx": "0x0ca798a208682576556f45def96dd8afe45635d2ef47559a87fee08dc41418a2",
+          "blockNumber": 10334194,
+          "note": "Volume round top-up, 19 Nov 2026 \u2014 reserves schedule 2."
+        }
+      ],
+      "totalFunded": "250000000000"
     },
     "schedules": [
       {
@@ -166,6 +175,18 @@
         "revocable": true,
         "createTx": "0x4ded139cc505f201ca47ccb30602f44bb46122bee98a846d53984cae27dde0cc",
         "blockNumber": 10160431
+      },
+      {
+        "id": 2,
+        "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+        "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+        "totalAmount": "100000000000",
+        "cliffSeconds": 120,
+        "durationSeconds": 120,
+        "revocable": true,
+        "createTx": "0x0e24ac28f283e105d4fe1db5b2534f3716e7d194fcbb64d2b18c7302ad1d170e",
+        "blockNumber": 10334196,
+        "note": "Volume round, 19 Nov 2026: short cliff/duration so the full amount vested and was claimed in the same session."
       }
     ],
     "claims": [
@@ -186,6 +207,36 @@
         "amountFromEvent": "5250000000",
         "claimedAmountAfter": "17250000000",
         "beneficiaryTokenBalanceAfter": "17250000000"
+      },
+      {
+        "scheduleId": 0,
+        "tx": "0xa4e7121e4779814798412b1eb71beed1b4b3ba851a76b8588a98fa97b34f23de",
+        "status": 1,
+        "blockNumber": 10334203,
+        "amountFromEvent": "82750000000",
+        "claimedAmountAfter": "100000000000",
+        "beneficiaryTokenBalanceAfter": "100000000000",
+        "round": "volume-2026-11-19"
+      },
+      {
+        "scheduleId": 1,
+        "tx": "0x882462cc252271730ad321c95d030d9235c2b05e7bc8253135c01020caec99bb",
+        "status": 1,
+        "blockNumber": 10334205,
+        "amountFromEvent": "10000000000",
+        "claimedAmountAfter": "10000000000",
+        "beneficiaryTokenBalanceAfter": "110000000000",
+        "round": "volume-2026-11-19"
+      },
+      {
+        "scheduleId": 2,
+        "tx": "0x630b12471bef687b00d6a4e4f124068069f0b0f7164edf428a964d65406af5ee",
+        "status": 1,
+        "blockNumber": 10334309,
+        "amountFromEvent": "100000000000",
+        "claimedAmountAfter": "100000000000",
+        "beneficiaryTokenBalanceAfter": "210000000000",
+        "round": "volume-2026-11-19"
       }
     ],
     "refusalPreCliff": {
@@ -226,25 +277,46 @@
       }
     },
     "verification": {
-      "erc20PaidToBeneficiary": "17250000000",
-      "contractClaimedAmount": "17250000000",
-      "wdtAllowanceJournal": "17250000000",
+      "scheduleCount": 3,
+      "schedules": {
+        "0": {
+          "totalAmount": "100000000000",
+          "claimedAmount": "100000000000"
+        },
+        "1": {
+          "totalAmount": "10000000000",
+          "claimedAmount": "10000000000"
+        },
+        "2": {
+          "totalAmount": "100000000000",
+          "claimedAmount": "100000000000"
+        }
+      },
+      "erc20PaidToBeneficiary": "210000000000",
+      "contractClaimedAmount": "210000000000",
+      "wdtAllowanceJournal": "210000000000",
       "invariantHolds": true,
-      "schedule1Claimed": "0",
-      "schedule1Untouched": true,
       "badTargetClaimed": "0",
       "badTargetAllowance": "0",
       "badTargetUntouched": true,
-      "vestingContractTokenBalance": "182750000000",
-      "totalReserved": "92750000000",
+      "vestingContractTokenBalance": "40000000000",
+      "totalReserved": "0",
       "claimTx": "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
       "refusalPreCliffTx": "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
       "refusalPreCliffStatus": 0,
       "refusalBadTargetTx": "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
       "refusalBadTargetStatus": 0,
       "script": "scripts/verify-v2.ts",
-      "result": "ALL V2 LIVE CHECKS PASS"
+      "result": "ALL V2 LIVE CHECKS PASS",
+      "note": "Re-verified 19 Nov 2026 after the volume round: the invariant is summed over all 3 schedules. Schedule 1 was claimed in full after its cliff+duration passed; its 16 Nov pre-cliff refusal tx remains the standing refusal evidence."
     },
-    "recoveryNote": "Token deployment recovered after the original deploy run was interrupted by a service restart; verified on chain before resuming."
+    "recoveryNote": "Token deployment recovered after the original deploy run was interrupted by a service restart; verified on chain before resuming.",
+    "volumeRound": {
+      "date": "2026-11-19 (WIB)",
+      "purpose": "Raise the live proven claim volume: complete schedules 0 and 1 (both fully vested) and run a third schedule end-to-end.",
+      "evidenceFile": "deployments.v2.volume.json",
+      "totalClaimedAfter": "210000000000",
+      "note": "The claims run was interrupted by a service restart after claims 0 and 1 landed; their records were recovered from chain (tx history + receipts + events). Schedule 2 was claimed by scripts/volume-claim2.ts."
+    }
   }
 }

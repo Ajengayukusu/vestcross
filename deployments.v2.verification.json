@@ -1,15 +1,28 @@
 {
-  "erc20PaidToBeneficiary": "17250000000",
-  "contractClaimedAmount": "17250000000",
-  "wdtAllowanceJournal": "17250000000",
+  "scheduleCount": 3,
+  "schedules": {
+    "0": {
+      "totalAmount": "100000000000",
+      "claimedAmount": "100000000000"
+    },
+    "1": {
+      "totalAmount": "10000000000",
+      "claimedAmount": "10000000000"
+    },
+    "2": {
+      "totalAmount": "100000000000",
+      "claimedAmount": "100000000000"
+    }
+  },
+  "erc20PaidToBeneficiary": "210000000000",
+  "contractClaimedAmount": "210000000000",
+  "wdtAllowanceJournal": "210000000000",
   "invariantHolds": true,
-  "schedule1Claimed": "0",
-  "schedule1Untouched": true,
   "badTargetClaimed": "0",
   "badTargetAllowance": "0",
   "badTargetUntouched": true,
-  "vestingContractTokenBalance": "182750000000",
-  "totalReserved": "92750000000",
+  "vestingContractTokenBalance": "40000000000",
+  "totalReserved": "0",
   "claimTx": "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
   "refusalPreCliffTx": "0x553c8d8b24ab53a18aa566753e015deca84c7298994f0eabd05f432b80cacdb4",
   "refusalPreCliffStatus": 0,

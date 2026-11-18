@@ -1,0 +1,53 @@
+{
+  "round": "volume-2026-11-19",
+  "topUp": {
+    "amount": "50000000000",
+    "tx": "0x0ca798a208682576556f45def96dd8afe45635d2ef47559a87fee08dc41418a2",
+    "status": 1,
+    "blockNumber": 10334194,
+    "deployerBalanceBefore": "790000000000",
+    "vestingBalanceBefore": "182750000000"
+  },
+  "schedule2": {
+    "id": 2,
+    "beneficiary": "0x8d0A347d472568DfB6189c84603302d044F0107b",
+    "beneficiaryNative": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+    "totalAmount": "100000000000",
+    "cliffSeconds": 120,
+    "durationSeconds": 120,
+    "revocable": true,
+    "createTx": "0x0e24ac28f283e105d4fe1db5b2534f3716e7d194fcbb64d2b18c7302ad1d170e",
+    "blockNumber": 10334196,
+    "start": "1795031627"
+  },
+  "claimsRecoveredNote": "The volume-claims run was interrupted by a service restart after claims 0 and 1 had landed; their records below were recovered from the chain itself (idx1 tx history + receipts + VestingClaimed events), not from the script's output.",
+  "claims": [
+    {
+      "scheduleId": 0,
+      "tx": "0xa4e7121e4779814798412b1eb71beed1b4b3ba851a76b8588a98fa97b34f23de",
+      "status": 1,
+      "blockNumber": 10334203,
+      "amountFromEvent": "82750000000",
+      "claimedAmountAfter": "100000000000",
+      "beneficiaryTokenBalanceAfter": "100000000000"
+    },
+    {
+      "scheduleId": 1,
+      "tx": "0x882462cc252271730ad321c95d030d9235c2b05e7bc8253135c01020caec99bb",
+      "status": 1,
+      "blockNumber": 10334205,
+      "amountFromEvent": "10000000000",
+      "claimedAmountAfter": "10000000000",
+      "beneficiaryTokenBalanceAfter": "110000000000"
+    },
+    {
+      "scheduleId": 2,
+      "tx": "0x630b12471bef687b00d6a4e4f124068069f0b0f7164edf428a964d65406af5ee",
+      "status": 1,
+      "blockNumber": 10334309,
+      "amountFromEvent": "100000000000",
+      "claimedAmountAfter": "100000000000",
+      "beneficiaryTokenBalanceAfter": "210000000000"
+    }
+  ]
+}
