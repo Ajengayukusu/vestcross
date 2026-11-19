@@ -216,7 +216,7 @@ function LiveProofPanel() {
         </div>
       </dl>
 
-      <h3>Live claims (schedule #0)</h3>
+      <h3>Live claims (all schedules)</h3>
       <table className="table">
         <thead>
           <tr><th>Claim</th><th>Amount paid (EVM)</th><th>Journaled on WDT (Native)</th><th>Transaction</th><th>Block</th></tr>
@@ -269,8 +269,11 @@ function LiveProofPanel() {
         <strong>Honest note:</strong> {LIVE_V2.honestNote} Re-verify the live
         state at any time with the read-only{" "}
         <span className="mono">{LIVE_V2.verifyScript}</span> in the repo.
-        Snapshot above: verified on chain at deployment time (full record in{" "}
-        <span className="mono">deployments.testnet.json</span>).
+        Snapshot above: claims through the 19 Nov 2026 volume rounds,
+        verified on chain (full record in{" "}
+        <span className="mono">deployments.testnet.json</span>,{" "}
+        <span className="mono">deployments.v2.volume.json</span> and{" "}
+        <span className="mono">deployments.v2.volume2.json</span>).
       </p>
     </section>
   );

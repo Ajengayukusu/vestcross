@@ -144,18 +144,38 @@ export const LIVE_V2 = {
   beneficiaryNative: "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
   claims: [
     {
-      amount: "12,000 vDEMO",
+      amount: "12,000 vDEMO (schedule #0)",
       tx: "0x79cf1cafec24d2f914e2ad14c40951773348fbde9755336129aef6e7f09695e8",
       block: 10160531,
     },
     {
-      amount: "5,250 vDEMO",
+      amount: "5,250 vDEMO (schedule #0)",
       tx: "0x6f6d84ef45d08c610b96c52d46eb7cf224b0fa39919acf9a5156eeae8fa755f1",
       block: 10160574,
     },
+    {
+      amount: "82,750 vDEMO (schedule #0)",
+      tx: "0xa4e7121e4779814798412b1eb71beed1b4b3ba851a76b8588a98fa97b34f23de",
+      block: 10334203,
+    },
+    {
+      amount: "10,000 vDEMO (schedule #1)",
+      tx: "0x882462cc252271730ad321c95d030d9235c2b05e7bc8253135c01020caec99bb",
+      block: 10334205,
+    },
+    {
+      amount: "100,000 vDEMO (schedule #2)",
+      tx: "0x630b12471bef687b00d6a4e4f124068069f0b0f7164edf428a964d65406af5ee",
+      block: 10334309,
+    },
+    {
+      amount: "200,000 vDEMO (schedule #3)",
+      tx: "0xc3167be3119f23d8ed6c63c3f1d0d66042a983b455e119cfd278f3c599de113c",
+      block: 10364856,
+    },
   ],
   invariant:
-    "ERC20 paid to beneficiary 17,250 vDEMO == WDT allowance journal 17,250 vDEMO == contract claimedAmount 17,250 vDEMO",
+    "ERC20 paid to beneficiaries 410,000 vDEMO == WDT allowance journal 410,000 vDEMO == contract claimedAmount 410,000 vDEMO (210,000 beneficiary 1 + 200,000 beneficiary 2)",
   refusals: [
     {
       label: "Pre-cliff claim (schedule #1, 24 h cliff not reached)",
@@ -169,6 +189,12 @@ export const LIVE_V2 = {
         "reverted with CrossVmCallFailed (bridge allowlist refusal) — payout 0, journal 0, claimed 0",
       tx: "0xc3389c73013b48bdc5b07b8712d4b3e150309716b7ee4cf5f3d09dcd3de9c95b",
       block: 10160553,
+    },
+    {
+      label: "Pre-cliff claim (schedule #3, 120 s cliff not reached)",
+      detail: "reverted with NothingToClaim — nothing moved",
+      tx: "0x985ed4934a940205eaf316cfd450ac23eab01ad28e0756525918b311effd8401",
+      block: 10364820,
     },
   ],
   tests: "70 automated tests pass (33 v1 + 37 v2), including dedicated atomicity suites",
