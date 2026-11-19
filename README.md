@@ -56,14 +56,18 @@
 5. **Deployment status — LIVE (v2, deployed 2026-11-16).**
    VestCrossV2 `0x64ab1fABEA011CA0395Ad835EC38B590CF76C295` escrows the
    project ERC20 **vDEMO** (`0x93B8F1162c7b153A7F5bd9d3341256188C93D796`)
-   and journals every claim into WDT. Five real claims are on chain
-   across three schedules — **210,000 vDEMO claimed in total**; the
-   three-way invariant was verified by an independent smart query:
-   paid **210,000,000,000** == allowance **210,000,000,000** ==
-   claimedAmount **210,000,000,000** base units. A
+   and journals every claim into WDT. Six real claims are on chain
+   across four schedules and **two beneficiaries** — **410,000 vDEMO
+   claimed in total**; the three-way invariant is verified per
+   beneficiary by an independent smart query: for each beneficiary,
+   paid == allowance == claimedAmount (210,000,000,000 for the first
+   beneficiary; 200,000,000,000 for the second; 410,000,000,000 in
+   aggregate). A
    pre-cliff claim and a claim on a throwaway deployment pointed at a
    non-allowlisted target both landed on chain and reverted (status 0),
-   moving nothing — the atomicity proof. **Why not v1's design live?**
+   moving nothing — the atomicity proof; a second pre-cliff refusal on
+   the newest schedule reverted the same way (tx
+   `0x985ed493…effd8401`, status 0). **Why not v1's design live?**
    v1 pays WDT itself from a Native escrow, but the entire WDT supply
    sits untouched in its minter's account (the token's only holder),
    every acquisition route is closed, and new CW20 instantiation is
@@ -261,10 +265,15 @@ the script header repeats these prerequisites.
   distinction matters: the cross-VM call, its atomicity and its public
   verifiability are real; a WDT-denominated payout is not claimed.
 - **Amounts are base units** (6 decimals on both tokens). Live state at
-  publication: all three schedules are fully claimed — 210,000 of
-  210,000 vDEMO paid out (100,000 + 10,000 + 100,000); schedule 1 was
+  publication: all four schedules are fully claimed — 410,000 of
+  410,000 vDEMO paid out (100,000 + 10,000 + 100,000 to the first
+  beneficiary; 200,000 to a second beneficiary added in the 19 Nov
+  upgrade round, schedule 3, created tx `0x95c8a224…ac46`, claimed tx
+  `0xc3167be3…13c`, after its own pre-cliff refusal reverted on chain);
+  schedule 1 was
   the pre-cliff refusal demo and was claimed once its cliff and
-  duration had passed. Current values are whatever
+  duration had passed. Total funded to the contract: 450,000 vDEMO;
+  40,000 remains as unreserved balance. Current values are whatever
   `scripts/verify-v2.ts` reports — it reads the chain, not this file.
 
 ## Repository layout
@@ -276,7 +285,8 @@ test/        VestCross.test.ts — 33 tests · VestCrossV2.test.ts — 37 tests 
 scripts/     deploy-v2.ts / resume-v2.ts / deploy-v2-badtarget.ts — the v2 live deployment
              claim-v2.ts / refusals-v2.ts / claim-again.ts — live claims + on-chain refusal demos
              volume-fund-schedule.ts / volume-claims.ts / volume-claim2.ts — the 19 Nov volume round
-             verify-v2.ts — read-only three-way invariant check against both lanes
+             volume2-fund-schedule.ts / volume2-refusal.ts / volume2-claims.ts — the 19 Nov upgrade round (schedule 3, second beneficiary)
+             verify-v2.ts — read-only per-beneficiary three-way invariant check against both lanes
              deploy.ts + plan-live-proof.md — the v1 deployment and its live-proof sequence
              probe-live.ts — the read-only WDT go/no-go probe behind the v1 finding
 frontend/    Vite + React + TS dashboard (demo simulation + live read via @qorechain/evm)

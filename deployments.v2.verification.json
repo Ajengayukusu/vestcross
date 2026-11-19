@@ -1,5 +1,5 @@
 {
-  "scheduleCount": 3,
+  "scheduleCount": 4,
   "schedules": {
     "0": {
       "totalAmount": "100000000000",
@@ -12,11 +12,33 @@
     "2": {
       "totalAmount": "100000000000",
       "claimedAmount": "100000000000"
+    },
+    "3": {
+      "totalAmount": "200000000000",
+      "claimedAmount": "200000000000"
     }
   },
   "erc20PaidToBeneficiary": "210000000000",
-  "contractClaimedAmount": "210000000000",
+  "contractClaimedAmount": "410000000000",
   "wdtAllowanceJournal": "210000000000",
+  "beneficiaries": {
+    "0x8d0a347d472568dfb6189c84603302d044f0107b": {
+      "native": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+      "erc20Balance": "210000000000",
+      "contractClaimed": "210000000000",
+      "wdtAllowance": "210000000000",
+      "holds": true
+    },
+    "0xd6404f48a6a3480b964afc591e7ed2181f47ee26": {
+      "native": "qor16eqy7j9x5dyqh9j2l3v3ulkjrq050m3xq4jnya",
+      "erc20Balance": "200000000000",
+      "contractClaimed": "200000000000",
+      "wdtAllowance": "200000000000",
+      "holds": true
+    }
+  },
+  "aggregateClaimed": "410000000000",
+  "aggregateBeneficiaryBalances": "410000000000",
   "invariantHolds": true,
   "badTargetClaimed": "0",
   "badTargetAllowance": "0",

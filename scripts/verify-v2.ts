@@ -15,6 +15,13 @@
  * claimed in full on 19 Nov 2026, after its cliff and duration had
  * passed, during the volume round.)
  *
+ * GENERALIZED 19 Nov 2026 (volume round 2): schedule 3 pays a SECOND
+ * beneficiary, so the invariant is now checked PER BENEFICIARY and in
+ * aggregate: for every beneficiary B, balanceOf(B) == sum of B's
+ * schedules' claimedAmount == WDT allowance(escrow -> B), and the sums
+ * over all beneficiaries equal the contract-wide claimed total. This is
+ * strictly stronger than the original single-beneficiary check.
+ *
  * Usage: npx ts-node scripts/verify-v2.ts
  */
 import { createCosmWasmClient, queryContractSmart } from "@qorechain/sdk";
@@ -56,6 +63,7 @@ async function main(): Promise<void> {
   const count = Number(await vest.scheduleCount());
   const schedules: Record<string, { totalAmount: string; claimedAmount: string }> = {};
   let claimedSum = 0n;
+  const byBeneficiary = new Map<string, { native: string; claimed: bigint }>();
   for (let i = 0; i < count; i++) {
     const s = await vest.getSchedule(i);
     schedules[String(i)] = {
@@ -63,12 +71,41 @@ async function main(): Promise<void> {
       claimedAmount: s.claimedAmount.toString(),
     };
     claimedSum += s.claimedAmount;
+    const key = (s.beneficiary as string).toLowerCase();
+    const entry = byBeneficiary.get(key) ?? { native: s.beneficiaryNative as string, claimed: 0n };
+    entry.claimed += s.claimedAmount;
+    byBeneficiary.set(key, entry);
   }
-  const benTokenBal = await token.balanceOf(BEN_EVM);
   const vestTokenBal = await token.balanceOf(partial.contract);
   const totalReserved = await vest.totalReserved();
 
   const cw = await createCosmWasmClient(RPC);
+  // Per-beneficiary three-way invariant (EVM payout == EVM books == Native journal).
+  const beneficiaries: Record<string, {
+    native: string; erc20Balance: string; contractClaimed: string; wdtAllowance: string; holds: boolean;
+  }> = {};
+  let allHold = true;
+  let balanceSum = 0n;
+  for (const [evm, entry] of byBeneficiary) {
+    const bal = await token.balanceOf(evm);
+    const allow = await queryContractSmart<AllowanceResponse>(cw, WDT, {
+      allowance: { owner: partial.escrowNativeAddress, spender: entry.native },
+    });
+    const holds =
+      bal.toString() === entry.claimed.toString() &&
+      entry.claimed.toString() === allow.allowance &&
+      entry.claimed > 0n;
+    beneficiaries[evm] = {
+      native: entry.native,
+      erc20Balance: bal.toString(),
+      contractClaimed: entry.claimed.toString(),
+      wdtAllowance: allow.allowance,
+      holds,
+    };
+    balanceSum += bal;
+    if (!holds) allHold = false;
+  }
+  const benTokenBal = await token.balanceOf(BEN_EVM);
   const allowMain = await queryContractSmart<AllowanceResponse>(cw, WDT, {
     allowance: { owner: partial.escrowNativeAddress, spender: BEN_NATIVE },
   });
@@ -83,10 +120,14 @@ async function main(): Promise<void> {
     erc20PaidToBeneficiary: benTokenBal.toString(),
     contractClaimedAmount: claimedSum.toString(),
     wdtAllowanceJournal: allowMain.allowance,
+    beneficiaries,
+    aggregateClaimed: claimedSum.toString(),
+    aggregateBeneficiaryBalances: balanceSum.toString(),
     invariantHolds:
-      benTokenBal.toString() === claimedSum.toString() &&
-      claimedSum.toString() === allowMain.allowance &&
-      BigInt(allowMain.allowance) > 0n,
+      allHold &&
+      balanceSum === claimedSum &&
+      benTokenBal.toString() === beneficiaries[BEN_EVM.toLowerCase()]?.contractClaimed &&
+      allowMain.allowance === beneficiaries[BEN_EVM.toLowerCase()]?.wdtAllowance,
     badTargetClaimed: sBad.claimedAmount.toString(),
     badTargetAllowance: allowBad.allowance,
     badTargetUntouched: sBad.claimedAmount.toString() === "0" && allowBad.allowance === "0",

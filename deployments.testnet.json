@@ -318,5 +318,75 @@
       "totalClaimedAfter": "210000000000",
       "note": "The claims run was interrupted by a service restart after claims 0 and 1 landed; their records were recovered from chain (tx history + receipts + events). Schedule 2 was claimed by scripts/volume-claim2.ts."
     }
+  },
+  "volumeRound2_2026-11-19": {
+    "purpose": "Upgrade round (19 Nov 2026): schedule 3 for a NEW beneficiary (idx13, never a beneficiary before), +200,000 vDEMO claimed, total claimed 410,000 vDEMO across 2 beneficiaries; new pre-cliff refusal on schedule 3; verify-v2.ts generalized to a per-beneficiary three-way invariant (strictly stronger).",
+    "topUp": {
+      "amount": "200000000000",
+      "tx": "0x099be0a5c8297c7e49e2326832a5c36d9a1b7671ac88ac09d5165dcef893d958",
+      "status": 1,
+      "blockNumber": 10364801,
+      "deployerBalanceBefore": "740000000000",
+      "unreservedBefore": "40000000000"
+    },
+    "schedule3": {
+      "id": 3,
+      "beneficiary": "0xD6404F48A6A3480b964afC591E7ED2181F47ee26",
+      "beneficiaryNative": "qor16eqy7j9x5dyqh9j2l3v3ulkjrq050m3xq4jnya",
+      "totalAmount": "200000000000",
+      "cliffSeconds": 120,
+      "durationSeconds": 120,
+      "revocable": true,
+      "createTx": "0x95c8a2246795d36362a30de884b1042c0a8af970256639434cfa05a76745ac46",
+      "blockNumber": 10364803,
+      "start": "1795076715"
+    },
+    "preCliffRefusal": {
+      "scheduleId": 3,
+      "beneficiary": "0xD6404F48A6A3480b964afC591E7ED2181F47ee26",
+      "tx": "0x985ed4934a940205eaf316cfd450ac23eab01ad28e0756525918b311effd8401",
+      "status": 0,
+      "blockNumber": 10364820,
+      "claimableAtAttempt": "0",
+      "beneficiaryBalanceBefore": "0",
+      "beneficiaryBalanceAfter": "0",
+      "claimedAfter": "0",
+      "note": "claim(3) attempted inside the 120 s cliff; on-chain receipt status 0 (NothingToClaim), no payout, no allowance journal."
+    },
+    "claim": {
+      "scheduleId": 3,
+      "beneficiary": "0xD6404F48A6A3480b964afC591E7ED2181F47ee26",
+      "tx": "0xc3167be3119f23d8ed6c63c3f1d0d66042a983b455e119cfd278f3c599de113c",
+      "status": 1,
+      "blockNumber": 10364856,
+      "amount": "200000000000",
+      "beneficiaryBalanceBefore": "0",
+      "beneficiaryBalanceAfter": "200000000000"
+    },
+    "totalsAfter": {
+      "totalFundedToContract": "450000000000",
+      "totalClaimed": "410000000000",
+      "contractBalanceAfter": "40000000000",
+      "beneficiaries": {
+        "0x8d0a347d472568dfb6189c84603302d044f0107b": {
+          "native": "qor1359rgl28y45dldscnjzxqvcz6pz0qyrmjq488c",
+          "erc20Balance": "210000000000",
+          "contractClaimed": "210000000000",
+          "wdtAllowance": "210000000000",
+          "holds": true
+        },
+        "0xd6404f48a6a3480b964afc591e7ed2181f47ee26": {
+          "native": "qor16eqy7j9x5dyqh9j2l3v3ulkjrq050m3xq4jnya",
+          "erc20Balance": "200000000000",
+          "contractClaimed": "200000000000",
+          "wdtAllowance": "200000000000",
+          "holds": true
+        }
+      },
+      "aggregateClaimed": "410000000000",
+      "invariantHolds": true,
+      "badTargetUntouched": true
+    },
+    "verification": "scripts/verify-v2.ts re-run after the round: ALL V2 LIVE CHECKS PASS (deployments.v2.verification.json regenerated)."
   }
 }
